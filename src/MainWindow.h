@@ -37,14 +37,22 @@ private:
     void ShowPreferences();
     void UpdateStatusBar(const std::wstring& text);
     
+    // TreeView support for folder navigation
+    void PopulateTreeView();
+    void PopulateTreeNode(HTREEITEM hParent, const std::wstring& path);
+    void OnTreeSelectionChanged(HTREEITEM hItem);
+    std::wstring GetTreeItemPath(HTREEITEM hItem);
+    
     // Custom draw support for progress bars
     void DrawProgressBar(HDC hdc, RECT rect, uint64_t size, uint64_t maxSize);
     COLORREF GetSizeColor(uint64_t size, uint64_t maxSize);
     
     HWND m_hwnd;
+    HWND m_treeView;
     HWND m_listView;
     HWND m_statusBar;
     HWND m_toolbar;
+    HWND m_splitter;
     
     std::unique_ptr<FolderScanner> m_scanner;
     std::shared_ptr<FileSystemItem> m_rootItem;
@@ -52,9 +60,14 @@ private:
     
     bool m_sortDescending;
     uint64_t m_maxSize;
+    int m_splitterPos;
+    bool m_splitterDragging;
     
     static constexpr int ID_BROWSE = 1001;
     static constexpr int ID_REFRESH = 1002;
     static constexpr int ID_THEME = 1003;
     static constexpr int ID_LISTVIEW = 2001;
+    static constexpr int ID_TREEVIEW = 2002;
+    static constexpr int ID_SPLITTER = 2003;
+    static constexpr int SPLITTER_WIDTH = 4;
 };

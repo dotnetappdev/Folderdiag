@@ -12,8 +12,9 @@
 #pragma comment(lib, "shlwapi.lib")
 
 MainWindow::MainWindow() 
-    : m_hwnd(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
-      m_toolbar(nullptr), m_sortDescending(true), m_maxSize(0) {
+    : m_hwnd(nullptr), m_treeView(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
+      m_toolbar(nullptr), m_splitter(nullptr), m_sortDescending(true), m_maxSize(0),
+      m_splitterPos(250), m_splitterDragging(false) {
     m_scanner = std::make_unique<FolderScanner>();
 }
 
@@ -24,7 +25,7 @@ bool MainWindow::Create() {
     // Initialize common controls
     INITCOMMONCONTROLSEX icex = {};
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES;
+    icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES | ICC_TREEVIEW_CLASSES;
     InitCommonControlsEx(&icex);
     
     WNDCLASSEXW wc = {};
@@ -187,6 +188,25 @@ void MainWindow::CreateControls() {
     SendMessage(m_toolbar, TB_ADDBUTTONSW, 4, reinterpret_cast<LPARAM>(&tbButtons));
     SendMessage(m_toolbar, TB_AUTOSIZE, 0, 0);
     
+    // Create TreeView for folder navigation
+    m_treeView = CreateWindowExW(
+        WS_EX_CLIENTEDGE, WC_TREEVIEWW, NULL,
+        WS_CHILD | WS_VISIBLE | WS_BORDER | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_SHOWSELALWAYS,
+        0, 0, 0, 0,
+        m_hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(ID_TREEVIEW)), hInst, NULL
+    );
+    
+    // Populate TreeView with system drives
+    PopulateTreeView();
+    
+    // Create splitter (invisible static control that acts as resize handle)
+    m_splitter = CreateWindowExW(
+        0, L"STATIC", NULL,
+        WS_CHILD | WS_VISIBLE | SS_NOTIFY,
+        0, 0, 0, 0,
+        m_hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(ID_SPLITTER)), hInst, NULL
+    );
+    
     // Create ListView
     m_listView = CreateWindowExW(
         0, WC_LISTVIEWW, NULL,
@@ -259,10 +279,34 @@ void MainWindow::OnSize(int width, int height) {
     }
     int statusHeight = rcStatus.bottom - rcStatus.top;
     
+    int contentHeight = height - toolbarHeight - statusHeight;
+    int contentTop = toolbarHeight;
+    
+    // Ensure splitter position is within bounds
+    if (m_splitterPos < 100) m_splitterPos = 100;
+    if (m_splitterPos > width - 200) m_splitterPos = width - 200;
+    
+    // Position TreeView (left pane)
+    if (m_treeView) {
+        SetWindowPos(m_treeView, NULL, 
+            0, contentTop, 
+            m_splitterPos, contentHeight,
+            SWP_NOZORDER);
+    }
+    
+    // Position splitter
+    if (m_splitter) {
+        SetWindowPos(m_splitter, NULL, 
+            m_splitterPos, contentTop, 
+            SPLITTER_WIDTH, contentHeight,
+            SWP_NOZORDER);
+    }
+    
+    // Position ListView (right pane)
     if (m_listView) {
         SetWindowPos(m_listView, NULL, 
-            0, toolbarHeight, 
-            width, height - toolbarHeight - statusHeight,
+            m_splitterPos + SPLITTER_WIDTH, contentTop, 
+            width - m_splitterPos - SPLITTER_WIDTH, contentHeight,
             SWP_NOZORDER);
     }
 }
@@ -300,7 +344,12 @@ void MainWindow::OnCommand(WPARAM wParam) {
 }
 
 void MainWindow::OnNotify(LPNMHDR pnmhdr) {
-    if (pnmhdr->idFrom == ID_LISTVIEW) {
+    if (pnmhdr->idFrom == ID_TREEVIEW) {
+        if (pnmhdr->code == TVN_SELCHANGED) {
+            LPNMTREEVIEW pnmtv = reinterpret_cast<LPNMTREEVIEW>(pnmhdr);
+            OnTreeSelectionChanged(pnmtv->itemNew.hItem);
+        }
+    } else if (pnmhdr->idFrom == ID_LISTVIEW) {
         if (pnmhdr->code == LVN_COLUMNCLICK) {
             LPNMLISTVIEW pnmv = reinterpret_cast<LPNMLISTVIEW>(pnmhdr);
             if (pnmv->iSubItem == 1) { // Size column
@@ -599,4 +648,134 @@ COLORREF MainWindow::GetSizeColor(uint64_t size, uint64_t maxSize) {
     }
     
     return color;
+}
+
+void MainWindow::PopulateTreeView() {
+    if (!m_treeView) return;
+    
+    TreeView_DeleteAllItems(m_treeView);
+    
+    // Add "This PC" root
+    TVINSERTSTRUCTW tvis = {};
+    tvis.hParent = TVI_ROOT;
+    tvis.hInsertAfter = TVI_LAST;
+    tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+    tvis.item.pszText = const_cast<LPWSTR>(L"This PC");
+    tvis.item.lParam = 0;
+    tvis.item.cChildren = 1;
+    
+    HTREEITEM hThisPC = TreeView_InsertItem(m_treeView, &tvis);
+    
+    // Get all drives
+    DWORD drives = GetLogicalDrives();
+    for (int i = 0; i < 26; ++i) {
+        if (drives & (1 << i)) {
+            wchar_t driveLetter[4] = { static_cast<wchar_t>(L'A' + i), L':', L'\\', L'\0' };
+            
+            UINT driveType = GetDriveTypeW(driveLetter);
+            if (driveType == DRIVE_FIXED || driveType == DRIVE_REMOVABLE || driveType == DRIVE_RAMDISK) {
+                wchar_t volumeName[MAX_PATH];
+                if (GetVolumeInformationW(driveLetter, volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0)) {
+                    std::wstring displayName = driveLetter;
+                    if (wcslen(volumeName) > 0) {
+                        displayName += L" ";
+                        displayName += volumeName;
+                    }
+                    
+                    tvis.hParent = hThisPC;
+                    tvis.item.pszText = const_cast<LPWSTR>(displayName.c_str());
+                    tvis.item.lParam = reinterpret_cast<LPARAM>(new std::wstring(driveLetter));
+                    tvis.item.cChildren = 1;
+                    
+                    TreeView_InsertItem(m_treeView, &tvis);
+                }
+            }
+        }
+    }
+    
+    TreeView_Expand(m_treeView, hThisPC, TVE_EXPAND);
+}
+
+void MainWindow::PopulateTreeNode(HTREEITEM hParent, const std::wstring& path) {
+    if (!m_treeView) return;
+    
+    // Remove placeholder child if exists
+    HTREEITEM hChild = TreeView_GetChild(m_treeView, hParent);
+    if (hChild) {
+        TVITEMW item = {};
+        item.mask = TVIF_PARAM;
+        item.hItem = hChild;
+        TreeView_GetItem(m_treeView, &item);
+        if (item.lParam == 0) {
+            TreeView_DeleteItem(m_treeView, hChild);
+        }
+    }
+    
+    // Enumerate subdirectories
+    std::wstring searchPath = path + L"*";
+    WIN32_FIND_DATAW findData;
+    HANDLE hFind = FindFirstFileW(searchPath.c_str(), &findData);
+    
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+                wcscmp(findData.cFileName, L".") != 0 &&
+                wcscmp(findData.cFileName, L"..") != 0) {
+                
+                std::wstring subPath = path + findData.cFileName + L"\\";
+                
+                TVINSERTSTRUCTW tvis = {};
+                tvis.hParent = hParent;
+                tvis.hInsertAfter = TVI_LAST;
+                tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+                tvis.item.pszText = findData.cFileName;
+                tvis.item.lParam = reinterpret_cast<LPARAM>(new std::wstring(subPath));
+                tvis.item.cChildren = 1;
+                
+                TreeView_InsertItem(m_treeView, &tvis);
+            }
+        } while (FindNextFileW(hFind, &findData));
+        FindClose(hFind);
+    }
+}
+
+void MainWindow::OnTreeSelectionChanged(HTREEITEM hItem) {
+    if (!hItem) return;
+    
+    TVITEMW item = {};
+    item.mask = TVIF_PARAM;
+    item.hItem = hItem;
+    
+    if (!TreeView_GetItem(m_treeView, &item)) return;
+    
+    if (item.lParam != 0) {
+        std::wstring* pPath = reinterpret_cast<std::wstring*>(item.lParam);
+        if (pPath) {
+            // Populate tree node on first expansion
+            if (TreeView_GetChild(m_treeView, hItem) == NULL || 
+                TreeView_GetChild(m_treeView, hItem) != NULL) {
+                PopulateTreeNode(hItem, *pPath);
+            }
+            
+            // Scan and display folder contents in ListView
+            ScanFolder(*pPath);
+        }
+    }
+}
+
+std::wstring MainWindow::GetTreeItemPath(HTREEITEM hItem) {
+    if (!hItem) return L"";
+    
+    TVITEMW item = {};
+    item.mask = TVIF_PARAM;
+    item.hItem = hItem;
+    
+    if (!TreeView_GetItem(m_treeView, &item)) return L"";
+    
+    if (item.lParam != 0) {
+        std::wstring* pPath = reinterpret_cast<std::wstring*>(item.lParam);
+        if (pPath) return *pPath;
+    }
+    
+    return L"";
 }
