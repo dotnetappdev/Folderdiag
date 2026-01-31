@@ -7,6 +7,7 @@
 #include <shlwapi.h>
 #include <algorithm>
 #include <sstream>
+#include <functional>
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
@@ -20,6 +21,8 @@ MainWindow::MainWindow()
 }
 
 MainWindow::~MainWindow() {
+    // Cleanup TreeView allocated strings
+    CleanupTreeViewItems();
 }
 
 bool MainWindow::Create() {
@@ -571,54 +574,59 @@ void MainWindow::OnContextMenu(int x, int y) {
     hr = SHGetDesktopFolder(&pDesktop);
     if (FAILED(hr)) return;
     
+    // Make a non-const copy for ParseDisplayName
+    std::wstring pathCopy = itemPath;
+    
     // Parse the display name to get PIDL
-    hr = pDesktop->ParseDisplayName(NULL, NULL, const_cast<LPWSTR>(itemPath.c_str()), 
-                                     NULL, &pidl, NULL);
-    if (SUCCEEDED(hr)) {
+    hr = pDesktop->ParseDisplayName(NULL, NULL, &pathCopy[0], NULL, &pidl, NULL);
+    if (SUCCEEDED(hr) && pidl) {
         // Get the parent folder
         LPITEMIDLIST pidlParent = ILClone(pidl);
-        ILRemoveLastID(pidlParent);
-        
-        LPCITEMIDLIST pidlChild = ILFindLastID(pidl);
-        
-        hr = pDesktop->BindToObject(pidlParent, NULL, IID_IShellFolder, 
-                                     reinterpret_cast<void**>(&pParentFolder));
-        if (SUCCEEDED(hr)) {
-            // Get the context menu
-            hr = pParentFolder->GetUIObjectOf(m_hwnd, 1, &pidlChild, IID_IContextMenu, 
-                                              NULL, reinterpret_cast<void**>(&pContextMenu));
+        if (pidlParent) {
+            ILRemoveLastID(pidlParent);
+            
+            LPCITEMIDLIST pidlChild = ILFindLastID(pidl);
+            
+            hr = pDesktop->BindToObject(pidlParent, NULL, IID_IShellFolder, 
+                                         reinterpret_cast<void**>(&pParentFolder));
             if (SUCCEEDED(hr)) {
-                // Create and display the menu
-                HMENU hMenu = CreatePopupMenu();
-                if (hMenu) {
-                    // Query the context menu for items
-                    hr = pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL | CMF_EXPLORE);
-                    if (SUCCEEDED(hr)) {
-                        // Convert back to screen coordinates
-                        POINT screenPt = { x, y };
-                        
-                        // Display the menu
-                        int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, 
-                                               screenPt.x, screenPt.y, 0, m_hwnd, NULL);
-                        if (cmd > 0) {
-                            // Execute the selected command
-                            CMINVOKECOMMANDINFO info = {};
-                            info.cbSize = sizeof(info);
-                            info.fMask = 0;
-                            info.hwnd = m_hwnd;
-                            info.lpVerb = MAKEINTRESOURCEA(cmd - 1);
-                            info.nShow = SW_SHOWNORMAL;
+                // Get the context menu
+                hr = pParentFolder->GetUIObjectOf(m_hwnd, 1, &pidlChild, IID_IContextMenu, 
+                                                  NULL, reinterpret_cast<void**>(&pContextMenu));
+                if (SUCCEEDED(hr)) {
+                    // Create and display the menu
+                    HMENU hMenu = CreatePopupMenu();
+                    if (hMenu) {
+                        // Query the context menu for items
+                        const UINT MAX_CONTEXT_MENU_CMD_ID = 0x7FFF;
+                        hr = pContextMenu->QueryContextMenu(hMenu, 0, 1, MAX_CONTEXT_MENU_CMD_ID, CMF_NORMAL | CMF_EXPLORE);
+                        if (SUCCEEDED(hr)) {
+                            // Convert back to screen coordinates
+                            POINT screenPt = { x, y };
                             
-                            pContextMenu->InvokeCommand(&info);
+                            // Display the menu
+                            int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, 
+                                                   screenPt.x, screenPt.y, 0, m_hwnd, NULL);
+                            if (cmd > 0) {
+                                // Execute the selected command
+                                CMINVOKECOMMANDINFO info = {};
+                                info.cbSize = sizeof(info);
+                                info.fMask = 0;
+                                info.hwnd = m_hwnd;
+                                info.lpVerb = MAKEINTRESOURCEA(cmd - 1);
+                                info.nShow = SW_SHOWNORMAL;
+                                
+                                pContextMenu->InvokeCommand(&info);
+                            }
                         }
+                        DestroyMenu(hMenu);
                     }
-                    DestroyMenu(hMenu);
+                    pContextMenu->Release();
                 }
-                pContextMenu->Release();
+                pParentFolder->Release();
             }
-            pParentFolder->Release();
+            ILFree(pidlParent);
         }
-        CoTaskMemFree(pidlParent);
         CoTaskMemFree(pidl);
     }
     pDesktop->Release();
@@ -905,6 +913,9 @@ COLORREF MainWindow::GetSizeColor(uint64_t size, uint64_t maxSize) {
 void MainWindow::PopulateTreeView() {
     if (!m_treeView) return;
     
+    // Cleanup previously allocated strings
+    CleanupTreeViewItems();
+    
     TreeView_DeleteAllItems(m_treeView);
     
     TVINSERTSTRUCTW tvis = {};
@@ -1068,6 +1079,42 @@ std::wstring MainWindow::GetTreeItemPath(HTREEITEM hItem) {
     }
     
     return L"";
+}
+
+void MainWindow::CleanupTreeViewItems() {
+    if (!m_treeView) return;
+    
+    // Helper lambda to recursively delete path strings
+    std::function<void(HTREEITEM)> CleanupNode = [&](HTREEITEM hItem) {
+        if (!hItem) return;
+        
+        // Get item data
+        TVITEMW item = {};
+        item.mask = TVIF_PARAM;
+        item.hItem = hItem;
+        
+        if (TreeView_GetItem(m_treeView, &item) && item.lParam != 0) {
+            // Free the allocated string
+            std::wstring* pPath = reinterpret_cast<std::wstring*>(item.lParam);
+            delete pPath;
+        }
+        
+        // Recursively cleanup children
+        HTREEITEM hChild = TreeView_GetChild(m_treeView, hItem);
+        while (hChild) {
+            HTREEITEM hNext = TreeView_GetNextSibling(m_treeView, hChild);
+            CleanupNode(hChild);
+            hChild = hNext;
+        }
+    };
+    
+    // Cleanup all root items
+    HTREEITEM hRoot = TreeView_GetRoot(m_treeView);
+    while (hRoot) {
+        HTREEITEM hNext = TreeView_GetNextSibling(m_treeView, hRoot);
+        CleanupNode(hRoot);
+        hRoot = hNext;
+    }
 }
 
 LRESULT CALLBACK MainWindow::SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
