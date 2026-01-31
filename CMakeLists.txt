@@ -40,7 +40,7 @@ set(RESOURCES
 # Create executable
 if(WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS} ${RESOURCES})
-    target_link_libraries(${PROJECT_NAME} comctl32 shlwapi uxtheme dwmapi)
+    target_link_libraries(${PROJECT_NAME} comctl32 shlwapi shell32 ole32 uxtheme dwmapi)
 else()
     message(FATAL_ERROR "This project is designed for Windows only")
 endif()

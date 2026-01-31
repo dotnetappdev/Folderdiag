@@ -10,6 +10,7 @@
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "shell32.lib")
 
 MainWindow::MainWindow() 
     : m_hwnd(nullptr), m_treeView(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
@@ -532,7 +533,95 @@ void MainWindow::OnNotify(LPNMHDR pnmhdr) {
 }
 
 void MainWindow::OnContextMenu(int x, int y) {
-    // Context menu can be implemented here
+    // Get the ListView control's position
+    if (!m_listView) return;
+    
+    // Convert screen coordinates to ListView coordinates
+    POINT pt = { x, y };
+    ScreenToClient(m_listView, &pt);
+    
+    // Check if right-click was on the ListView
+    LVHITTESTINFO hitTest = {};
+    hitTest.pt = pt;
+    int itemIndex = ListView_HitTest(m_listView, &hitTest);
+    
+    if (itemIndex == -1) {
+        // No item was clicked, show background context menu
+        return;
+    }
+    
+    // Get the item data
+    LVITEMW item = {};
+    item.mask = LVIF_PARAM;
+    item.iItem = itemIndex;
+    if (!ListView_GetItem(m_listView, &item)) return;
+    
+    FileSystemItem* pItem = reinterpret_cast<FileSystemItem*>(item.lParam);
+    if (!pItem) return;
+    
+    std::wstring itemPath = pItem->GetPath();
+    
+    // Get shell context menu for the item
+    HRESULT hr;
+    IShellFolder* pDesktop = nullptr;
+    IShellFolder* pParentFolder = nullptr;
+    LPITEMIDLIST pidl = nullptr;
+    IContextMenu* pContextMenu = nullptr;
+    
+    hr = SHGetDesktopFolder(&pDesktop);
+    if (FAILED(hr)) return;
+    
+    // Parse the display name to get PIDL
+    hr = pDesktop->ParseDisplayName(NULL, NULL, const_cast<LPWSTR>(itemPath.c_str()), 
+                                     NULL, &pidl, NULL);
+    if (SUCCEEDED(hr)) {
+        // Get the parent folder
+        LPITEMIDLIST pidlParent = ILClone(pidl);
+        ILRemoveLastID(pidlParent);
+        
+        LPCITEMIDLIST pidlChild = ILFindLastID(pidl);
+        
+        hr = pDesktop->BindToObject(pidlParent, NULL, IID_IShellFolder, 
+                                     reinterpret_cast<void**>(&pParentFolder));
+        if (SUCCEEDED(hr)) {
+            // Get the context menu
+            hr = pParentFolder->GetUIObjectOf(m_hwnd, 1, &pidlChild, IID_IContextMenu, 
+                                              NULL, reinterpret_cast<void**>(&pContextMenu));
+            if (SUCCEEDED(hr)) {
+                // Create and display the menu
+                HMENU hMenu = CreatePopupMenu();
+                if (hMenu) {
+                    // Query the context menu for items
+                    hr = pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL | CMF_EXPLORE);
+                    if (SUCCEEDED(hr)) {
+                        // Convert back to screen coordinates
+                        POINT screenPt = { x, y };
+                        
+                        // Display the menu
+                        int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, 
+                                               screenPt.x, screenPt.y, 0, m_hwnd, NULL);
+                        if (cmd > 0) {
+                            // Execute the selected command
+                            CMINVOKECOMMANDINFO info = {};
+                            info.cbSize = sizeof(info);
+                            info.fMask = 0;
+                            info.hwnd = m_hwnd;
+                            info.lpVerb = MAKEINTRESOURCEA(cmd - 1);
+                            info.nShow = SW_SHOWNORMAL;
+                            
+                            pContextMenu->InvokeCommand(&info);
+                        }
+                    }
+                    DestroyMenu(hMenu);
+                }
+                pContextMenu->Release();
+            }
+            pParentFolder->Release();
+        }
+        CoTaskMemFree(pidlParent);
+        CoTaskMemFree(pidl);
+    }
+    pDesktop->Release();
 }
 
 void MainWindow::BrowseFolder() {
@@ -818,11 +907,49 @@ void MainWindow::PopulateTreeView() {
     
     TreeView_DeleteAllItems(m_treeView);
     
-    // Add "This PC" root
     TVINSERTSTRUCTW tvis = {};
     tvis.hParent = TVI_ROOT;
     tvis.hInsertAfter = TVI_LAST;
     tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+    
+    // Helper lambda to add special folders
+    auto AddSpecialFolder = [&](HTREEITEM hParent, const wchar_t* displayName, int csidl) {
+        wchar_t path[MAX_PATH];
+        if (SUCCEEDED(SHGetFolderPathW(NULL, csidl, NULL, 0, path))) {
+            std::wstring folderPath = path;
+            if (folderPath.back() != L'\\') {
+                folderPath += L'\\';
+            }
+            
+            tvis.hParent = hParent;
+            tvis.item.pszText = const_cast<LPWSTR>(displayName);
+            tvis.item.lParam = reinterpret_cast<LPARAM>(new std::wstring(folderPath));
+            tvis.item.cChildren = 1;
+            
+            return TreeView_InsertItem(m_treeView, &tvis);
+        }
+        return (HTREEITEM)NULL;
+    };
+    
+    // Add special folders at root level (like Windows 11 Explorer)
+    AddSpecialFolder(TVI_ROOT, L"Desktop", CSIDL_DESKTOP);
+    AddSpecialFolder(TVI_ROOT, L"Documents", CSIDL_MYDOCUMENTS);
+    
+    // Add Downloads folder (construct from user profile)
+    wchar_t profilePath[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, profilePath))) {
+        std::wstring downloadsPath = profilePath;
+        downloadsPath += L"\\Downloads\\";
+        
+        tvis.hParent = TVI_ROOT;
+        tvis.item.pszText = const_cast<LPWSTR>(L"Downloads");
+        tvis.item.lParam = reinterpret_cast<LPARAM>(new std::wstring(downloadsPath));
+        tvis.item.cChildren = 1;
+        TreeView_InsertItem(m_treeView, &tvis);
+    }
+    
+    // Add "This PC" root
+    tvis.hParent = TVI_ROOT;
     tvis.item.pszText = const_cast<LPWSTR>(L"This PC");
     tvis.item.lParam = 0;
     tvis.item.cChildren = 1;
