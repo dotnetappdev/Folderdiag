@@ -43,6 +43,9 @@ private:
     void OnTreeSelectionChanged(HTREEITEM hItem);
     std::wstring GetTreeItemPath(HTREEITEM hItem);
     
+    // Splitter support
+    static LRESULT CALLBACK SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    
     // Custom draw support for progress bars
     void DrawProgressBar(HDC hdc, RECT rect, uint64_t size, uint64_t maxSize);
     COLORREF GetSizeColor(uint64_t size, uint64_t maxSize);

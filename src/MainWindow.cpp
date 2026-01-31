@@ -118,6 +118,78 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
             OnContextMenu(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
             return 0;
             
+        case WM_LBUTTONDOWN: {
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
+            
+            // Check if click is on splitter
+            RECT splitterRect;
+            GetWindowRect(m_splitter, &splitterRect);
+            POINT pt = {x, y};
+            ClientToScreen(m_hwnd, &pt);
+            
+            if (PtInRect(&splitterRect, pt)) {
+                m_splitterDragging = true;
+                SetCapture(m_hwnd);
+                SetCursor(LoadCursor(NULL, IDC_SIZEWE));
+            }
+            return 0;
+        }
+        
+        case WM_LBUTTONUP:
+            if (m_splitterDragging) {
+                m_splitterDragging = false;
+                ReleaseCapture();
+            }
+            return 0;
+            
+        case WM_MOUSEMOVE: {
+            int x = GET_X_LPARAM(lParam);
+            
+            if (m_splitterDragging) {
+                // Update splitter position
+                RECT clientRect;
+                GetClientRect(m_hwnd, &clientRect);
+                
+                // Constrain splitter position
+                if (x < 100) x = 100;
+                if (x > clientRect.right - 200) x = clientRect.right - 200;
+                
+                m_splitterPos = x;
+                
+                // Trigger resize
+                OnSize(clientRect.right, clientRect.bottom);
+                SetCursor(LoadCursor(NULL, IDC_SIZEWE));
+            } else {
+                // Check if mouse is over splitter for cursor change
+                RECT splitterRect;
+                GetWindowRect(m_splitter, &splitterRect);
+                POINT pt = {x, GET_Y_LPARAM(lParam)};
+                ClientToScreen(m_hwnd, &pt);
+                
+                if (PtInRect(&splitterRect, pt)) {
+                    SetCursor(LoadCursor(NULL, IDC_SIZEWE));
+                }
+            }
+            return 0;
+        }
+        
+        case WM_SETCURSOR: {
+            if (LOWORD(lParam) == HTCLIENT) {
+                POINT pt;
+                GetCursorPos(&pt);
+                
+                RECT splitterRect;
+                GetWindowRect(m_splitter, &splitterRect);
+                
+                if (PtInRect(&splitterRect, pt)) {
+                    SetCursor(LoadCursor(NULL, IDC_SIZEWE));
+                    return TRUE;
+                }
+            }
+            break;
+        }
+            
         case WM_USER + 1: {
             // Progress update
             std::wstring* pPath = reinterpret_cast<std::wstring*>(lParam);
@@ -199,13 +271,16 @@ void MainWindow::CreateControls() {
     // Populate TreeView with system drives
     PopulateTreeView();
     
-    // Create splitter (invisible static control that acts as resize handle)
+    // Create splitter (resize handle between panes)
     m_splitter = CreateWindowExW(
         0, L"STATIC", NULL,
-        WS_CHILD | WS_VISIBLE | SS_NOTIFY,
+        WS_CHILD | WS_VISIBLE | SS_NOTIFY | SS_OWNERDRAW,
         0, 0, 0, 0,
         m_hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(ID_SPLITTER)), hInst, NULL
     );
+    
+    // Subclass splitter for custom drawing
+    SetWindowSubclass(m_splitter, SplitterProc, 0, reinterpret_cast<DWORD_PTR>(this));
     
     // Create ListView
     m_listView = CreateWindowExW(
@@ -778,4 +853,41 @@ std::wstring MainWindow::GetTreeItemPath(HTREEITEM hItem) {
     }
     
     return L"";
+}
+
+LRESULT CALLBACK MainWindow::SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+    switch (uMsg) {
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            
+            // Get theme colors
+            const auto& theme = ThemeManager::Instance();
+            const auto& colors = theme.GetColors();
+            
+            // Fill with splitter color (slightly darker than background)
+            HBRUSH brush = CreateSolidBrush(colors.border);
+            FillRect(hdc, &rect, brush);
+            DeleteObject(brush);
+            
+            // Draw a subtle highlight on the left edge
+            HBRUSH highlightBrush = CreateSolidBrush(RGB(200, 200, 200));
+            RECT highlightRect = rect;
+            highlightRect.right = highlightRect.left + 1;
+            FillRect(hdc, &highlightRect, highlightBrush);
+            DeleteObject(highlightBrush);
+            
+            EndPaint(hwnd, &ps);
+            return 0;
+        }
+        
+        case WM_NCDESTROY:
+            RemoveWindowSubclass(hwnd, SplitterProc, uIdSubclass);
+            break;
+    }
+    
+    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
