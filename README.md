@@ -26,8 +26,18 @@ A modern Windows file explorer application that analyzes and displays the bigges
 ### Light Mode
 The application features a clean, modern interface with detailed file and folder information displayed in columns.
 
+![FoldersDiag Light Mode](docs/screenshots/light-mode-placeholder.svg)
+
+*Screenshot shows the main window in light mode with toolbar buttons (Browse, Refresh, Toggle Theme), sortable columns (Name, Size, Files, Folders, Path), and folder hierarchy with indentation.*
+
 ### Dark Mode
 Easy-to-read dark theme for reduced eye strain during extended use.
+
+![FoldersDiag Dark Mode](docs/screenshots/dark-mode-placeholder.svg)
+
+*Screenshot shows the same interface in dark mode, demonstrating the theme toggle functionality with comfortable colors for low-light environments.*
+
+> **Note**: The above are placeholder mockups. To add actual screenshots, build and run the application on Windows, capture screenshots in both themes, and replace the placeholder files in `docs/screenshots/`. See [docs/screenshots/README.md](docs/screenshots/README.md) for detailed instructions.
 
 ## Building the Application
 

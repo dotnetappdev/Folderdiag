@@ -1,0 +1,78 @@
+<svg width="1280" height="720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light Mode Background -->
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  
+  <!-- Window Border -->
+  <rect x="10" y="10" width="1260" height="700" fill="none" stroke="#C8C8C8" stroke-width="2"/>
+  
+  <!-- Title Bar -->
+  <rect x="10" y="10" width="1260" height="40" fill="#F0F0F0"/>
+  <text x="20" y="35" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#000000">FoldersDiag - Folder Size Analyzer</text>
+  
+  <!-- Menu Bar -->
+  <rect x="10" y="50" width="1260" height="30" fill="#FFFFFF"/>
+  <text x="20" y="70" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#000000">File   View</text>
+  
+  <!-- Toolbar -->
+  <rect x="10" y="80" width="1260" height="50" fill="#F0F0F0"/>
+  <rect x="20" y="90" width="100" height="30" fill="#E0E0E0" stroke="#C8C8C8" stroke-width="1"/>
+  <text x="35" y="110" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">📁 Browse</text>
+  
+  <rect x="130" y="90" width="100" height="30" fill="#E0E0E0" stroke="#C8C8C8" stroke-width="1"/>
+  <text x="140" y="110" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">🔄 Refresh</text>
+  
+  <rect x="250" y="90" width="130" height="30" fill="#E0E0E0" stroke="#C8C8C8" stroke-width="1"/>
+  <text x="255" y="110" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">☀️ Toggle Theme</text>
+  
+  <!-- ListView Header -->
+  <rect x="10" y="130" width="1260" height="30" fill="#F0F0F0"/>
+  <text x="20" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="bold" fill="#000000">Name</text>
+  <text x="420" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="bold" fill="#000000">Size</text>
+  <text x="620" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="bold" fill="#000000">Files</text>
+  <text x="820" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="bold" fill="#000000">Folders</text>
+  <text x="1020" y="150" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="bold" fill="#000000">Path</text>
+  
+  <!-- ListView Content (Sample Data) -->
+  <rect x="10" y="160" width="1260" height="30" fill="#FFFFFF"/>
+  <text x="20" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">Documents</text>
+  <text x="420" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">45.8 GB</text>
+  <text x="620" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">8,934</text>
+  <text x="820" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">423</text>
+  <text x="1020" y="180" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">C:\Users\John\Documents</text>
+  
+  <rect x="10" y="190" width="1260" height="30" fill="#F8F8F8"/>
+  <text x="30" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">Projects</text>
+  <text x="420" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">32.1 GB</text>
+  <text x="620" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">6,245</text>
+  <text x="820" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">287</text>
+  <text x="1020" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">C:\Users\John\...\Projects</text>
+  
+  <rect x="10" y="220" width="1260" height="30" fill="#FFFFFF"/>
+  <text x="50" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">WebApp</text>
+  <text x="420" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">15.3 GB</text>
+  <text x="620" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">3,102</text>
+  <text x="820" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">145</text>
+  <text x="1020" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">C:\Users\John\...\WebApp</text>
+  
+  <rect x="10" y="250" width="1260" height="30" fill="#F8F8F8"/>
+  <text x="30" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">Downloads</text>
+  <text x="420" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">85.2 GB</text>
+  <text x="620" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">3,421</text>
+  <text x="820" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">156</text>
+  <text x="1020" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">C:\Users\John\Downloads</text>
+  
+  <rect x="10" y="280" width="1260" height="30" fill="#FFFFFF"/>
+  <text x="20" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">Videos</text>
+  <text x="420" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">125.4 GB</text>
+  <text x="620" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">847</text>
+  <text x="820" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">12</text>
+  <text x="1020" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">C:\Users\John\Videos</text>
+  
+  <!-- Status Bar -->
+  <rect x="10" y="680" width="1260" height="30" fill="#F0F0F0"/>
+  <text x="20" y="700" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#000000">Scan complete. Found 18,473 files in 1,012 folders. Total size: 306.1 GB</text>
+  
+  <!-- Placeholder Watermark -->
+  <text x="640" y="420" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="bold" fill="#FF0000" opacity="0.3" text-anchor="middle">PLACEHOLDER</text>
+  <text x="640" y="460" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#999999" text-anchor="middle">Replace with actual screenshot of FoldersDiag in Light Mode</text>
+</svg>
