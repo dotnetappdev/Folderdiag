@@ -627,7 +627,7 @@ void MainWindow::OnContextMenu(int x, int y) {
             }
             ILFree(pidlParent);
         }
-        CoTaskMemFree(pidl);
+        ILFree(pidl);
     }
     pDesktop->Release();
 }
@@ -924,7 +924,7 @@ void MainWindow::PopulateTreeView() {
     tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
     
     // Helper lambda to add special folders
-    auto AddSpecialFolder = [&](HTREEITEM hParent, const wchar_t* displayName, int csidl) {
+    auto AddSpecialFolder = [this, &tvis](HTREEITEM hParent, const wchar_t* displayName, int csidl) {
         wchar_t path[MAX_PATH];
         if (SUCCEEDED(SHGetFolderPathW(NULL, csidl, NULL, 0, path))) {
             std::wstring folderPath = path;
