@@ -36,6 +36,10 @@ private:
     void ToggleTheme();
     void UpdateStatusBar(const std::wstring& text);
     
+    // Custom draw support for progress bars
+    void DrawProgressBar(HDC hdc, RECT rect, uint64_t size, uint64_t maxSize);
+    COLORREF GetSizeColor(uint64_t size, uint64_t maxSize);
+    
     HWND m_hwnd;
     HWND m_listView;
     HWND m_statusBar;
@@ -46,6 +50,7 @@ private:
     std::vector<std::shared_ptr<FileSystemItem>> m_flatList;
     
     bool m_sortDescending;
+    uint64_t m_maxSize;
     
     static constexpr int ID_BROWSE = 1001;
     static constexpr int ID_REFRESH = 1002;

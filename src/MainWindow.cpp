@@ -11,7 +11,7 @@
 
 MainWindow::MainWindow() 
     : m_hwnd(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
-      m_toolbar(nullptr), m_sortDescending(true) {
+      m_toolbar(nullptr), m_sortDescending(true), m_maxSize(0) {
     m_scanner = std::make_unique<FolderScanner>();
 }
 
@@ -201,7 +201,7 @@ void MainWindow::CreateControls() {
     col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     
     col.pszText = const_cast<LPWSTR>(L"Name");
-    col.cx = 350;
+    col.cx = 300;
     col.iSubItem = 0;
     ListView_InsertColumn(m_listView, 0, &col);
     
@@ -210,20 +210,25 @@ void MainWindow::CreateControls() {
     col.iSubItem = 1;
     ListView_InsertColumn(m_listView, 1, &col);
     
-    col.pszText = const_cast<LPWSTR>(L"Files");
-    col.cx = 100;
+    col.pszText = const_cast<LPWSTR>(L"Size Bar");
+    col.cx = 200;
     col.iSubItem = 2;
     ListView_InsertColumn(m_listView, 2, &col);
     
-    col.pszText = const_cast<LPWSTR>(L"Folders");
+    col.pszText = const_cast<LPWSTR>(L"Files");
     col.cx = 100;
     col.iSubItem = 3;
     ListView_InsertColumn(m_listView, 3, &col);
     
-    col.pszText = const_cast<LPWSTR>(L"Path");
-    col.cx = 400;
+    col.pszText = const_cast<LPWSTR>(L"Folders");
+    col.cx = 100;
     col.iSubItem = 4;
     ListView_InsertColumn(m_listView, 4, &col);
+    
+    col.pszText = const_cast<LPWSTR>(L"Path");
+    col.cx = 350;
+    col.iSubItem = 5;
+    ListView_InsertColumn(m_listView, 5, &col);
     
     // Create status bar
     m_statusBar = CreateWindowExW(
@@ -289,10 +294,38 @@ void MainWindow::OnCommand(WPARAM wParam) {
 }
 
 void MainWindow::OnNotify(LPNMHDR pnmhdr) {
-    if (pnmhdr->idFrom == ID_LISTVIEW && pnmhdr->code == LVN_COLUMNCLICK) {
-        LPNMLISTVIEW pnmv = reinterpret_cast<LPNMLISTVIEW>(pnmhdr);
-        if (pnmv->iSubItem == 1) { // Size column
-            SortBySize();
+    if (pnmhdr->idFrom == ID_LISTVIEW) {
+        if (pnmhdr->code == LVN_COLUMNCLICK) {
+            LPNMLISTVIEW pnmv = reinterpret_cast<LPNMLISTVIEW>(pnmhdr);
+            if (pnmv->iSubItem == 1) { // Size column
+                SortBySize();
+            }
+        } else if (pnmhdr->code == NM_CUSTOMDRAW) {
+            LPNMLVCUSTOMDRAW pCustomDraw = reinterpret_cast<LPNMLVCUSTOMDRAW>(pnmhdr);
+            
+            if (pCustomDraw->nmcd.dwDrawStage == CDDS_PREPAINT) {
+                SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+                return;
+            }
+            
+            if (pCustomDraw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT) {
+                SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+                return;
+            }
+            
+            if (pCustomDraw->nmcd.dwDrawStage == (CDDS_ITEMPREPAINT | CDDS_SUBITEM)) {
+                if (pCustomDraw->iSubItem == 2) { // Size Bar column
+                    FileSystemItem* item = reinterpret_cast<FileSystemItem*>(pCustomDraw->nmcd.lItemlParam);
+                    if (item) {
+                        RECT rect = pCustomDraw->nmcd.rc;
+                        DrawProgressBar(pCustomDraw->nmcd.hdc, rect, item->GetSize(), m_maxSize);
+                        SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
+                        return;
+                    }
+                }
+                SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, CDRF_DODEFAULT);
+                return;
+            }
         }
     }
 }
@@ -354,11 +387,15 @@ void MainWindow::PopulateListView(std::shared_ptr<FileSystemItem> root) {
     
     ListView_DeleteAllItems(m_listView);
     m_flatList.clear();
+    m_maxSize = 0;
     
-    // Collect all items
+    // Collect all items and find max size
     std::function<void(std::shared_ptr<FileSystemItem>, int)> collectItems;
     collectItems = [&](std::shared_ptr<FileSystemItem> item, int indent) {
         m_flatList.push_back(item);
+        if (item->GetSize() > m_maxSize) {
+            m_maxSize = item->GetSize();
+        }
         AddItemToListView(item, indent);
         
         for (const auto& child : item->GetChildren()) {
@@ -391,18 +428,25 @@ void MainWindow::AddItemToListView(std::shared_ptr<FileSystemItem> item, int ind
     int index = ListView_InsertItem(m_listView, &lvi);
     
     if (index != -1) {
+        // Column 1: Size text
         ListView_SetItemText(m_listView, index, 1, 
                            const_cast<LPWSTR>(item->GetSizeFormatted().c_str()));
         
+        // Column 2: Size bar (drawn via custom draw)
+        ListView_SetItemText(m_listView, index, 2, const_cast<LPWSTR>(L""));
+        
+        // Column 3: Files
         std::wstring fileCount = std::to_wstring(item->GetFileCount());
-        ListView_SetItemText(m_listView, index, 2, 
+        ListView_SetItemText(m_listView, index, 3, 
                            const_cast<LPWSTR>(fileCount.c_str()));
         
+        // Column 4: Folders
         std::wstring dirCount = std::to_wstring(item->GetDirectoryCount());
-        ListView_SetItemText(m_listView, index, 3, 
+        ListView_SetItemText(m_listView, index, 4, 
                            const_cast<LPWSTR>(dirCount.c_str()));
         
-        ListView_SetItemText(m_listView, index, 4, 
+        // Column 5: Path
+        ListView_SetItemText(m_listView, index, 5, 
                            const_cast<LPWSTR>(item->GetPath().c_str()));
     }
 }
@@ -447,5 +491,100 @@ void MainWindow::ToggleTheme() {
 void MainWindow::UpdateStatusBar(const std::wstring& text) {
     if (m_statusBar) {
         SendMessageW(m_statusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(text.c_str()));
+    }
+}
+
+void MainWindow::DrawProgressBar(HDC hdc, RECT rect, uint64_t size, uint64_t maxSize) {
+    if (maxSize == 0) return;
+    
+    auto& theme = ThemeManager::Instance();
+    
+    // Add padding
+    rect.left += 4;
+    rect.right -= 4;
+    rect.top += 2;
+    rect.bottom -= 2;
+    
+    // Calculate bar width based on percentage
+    double percentage = static_cast<double>(size) / static_cast<double>(maxSize);
+    int barWidth = static_cast<int>((rect.right - rect.left) * percentage);
+    
+    // Draw background
+    HBRUSH bgBrush = CreateSolidBrush(theme.GetColors().alternateRow);
+    FillRect(hdc, &rect, bgBrush);
+    DeleteObject(bgBrush);
+    
+    // Draw progress bar if there's any size
+    if (barWidth > 0) {
+        RECT barRect = rect;
+        barRect.right = barRect.left + barWidth;
+        
+        // Get color based on size
+        COLORREF barColor = GetSizeColor(size, maxSize);
+        
+        // Create gradient effect
+        TRIVERTEX vertex[2];
+        vertex[0].x = barRect.left;
+        vertex[0].y = barRect.top;
+        vertex[0].Red = GetRValue(barColor) << 8;
+        vertex[0].Green = GetGValue(barColor) << 8;
+        vertex[0].Blue = GetBValue(barColor) << 8;
+        vertex[0].Alpha = 0x0000;
+        
+        // Slightly lighter color for gradient end
+        int r = min(255, GetRValue(barColor) + 30);
+        int g = min(255, GetGValue(barColor) + 30);
+        int b = min(255, GetBValue(barColor) + 30);
+        
+        vertex[1].x = barRect.right;
+        vertex[1].y = barRect.bottom;
+        vertex[1].Red = r << 8;
+        vertex[1].Green = g << 8;
+        vertex[1].Blue = b << 8;
+        vertex[1].Alpha = 0x0000;
+        
+        GRADIENT_RECT gRect = { 0, 1 };
+        GradientFill(hdc, vertex, 2, &gRect, 1, GRADIENT_FILL_RECT_H);
+        
+        // Draw border around bar
+        HBRUSH borderBrush = CreateSolidBrush(RGB(
+            max(0, GetRValue(barColor) - 40),
+            max(0, GetGValue(barColor) - 40),
+            max(0, GetBValue(barColor) - 40)
+        ));
+        FrameRect(hdc, &barRect, borderBrush);
+        DeleteObject(borderBrush);
+    }
+    
+    // Draw border around entire cell
+    HBRUSH frameBrush = CreateSolidBrush(theme.GetColors().border);
+    FrameRect(hdc, &rect, frameBrush);
+    DeleteObject(frameBrush);
+}
+
+COLORREF MainWindow::GetSizeColor(uint64_t size, uint64_t maxSize) {
+    if (maxSize == 0) return RGB(150, 150, 150);
+    
+    double percentage = static_cast<double>(size) / static_cast<double>(maxSize);
+    
+    // Color scale: Blue -> Cyan -> Green -> Yellow -> Orange -> Red
+    if (percentage >= 0.8) {
+        // Red zone (80-100%)
+        return RGB(220, 50, 50);
+    } else if (percentage >= 0.6) {
+        // Orange zone (60-80%)
+        return RGB(255, 140, 50);
+    } else if (percentage >= 0.4) {
+        // Yellow zone (40-60%)
+        return RGB(255, 200, 50);
+    } else if (percentage >= 0.2) {
+        // Green zone (20-40%)
+        return RGB(100, 200, 100);
+    } else if (percentage >= 0.1) {
+        // Cyan zone (10-20%)
+        return RGB(80, 180, 200);
+    } else {
+        // Blue zone (0-10%)
+        return RGB(100, 150, 220);
     }
 }
