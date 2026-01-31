@@ -204,7 +204,7 @@ Remove or update the note at the bottom of the Screenshots section in README.md 
 
 ```cmd
 # Build the application
-cd /path/to/Folderdiag
+cd /path/to/FoldersDiag
 mkdir build && cd build
 cmake ..
 cmake --build . --config Release
