@@ -7,6 +7,12 @@
 #include <memory>
 #include <vector>
 
+enum class ViewMode {
+    Details,
+    List,
+    Icons
+};
+
 class MainWindow {
 public:
     MainWindow();
@@ -38,6 +44,10 @@ private:
     void ShowPreferences();
     void UpdateStatusBar(const std::wstring& text);
     
+    // View mode support
+    void SetViewMode(ViewMode mode);
+    void ApplyViewMode();
+    
     // TreeView support for folder navigation
     void PopulateTreeView();
     void PopulateTreeNode(HTREEITEM hParent, const std::wstring& path);
@@ -67,10 +77,14 @@ private:
     uint64_t m_maxSize;
     int m_splitterPos;
     bool m_splitterDragging;
+    ViewMode m_viewMode;
     
     static constexpr int ID_BROWSE = 1001;
     static constexpr int ID_REFRESH = 1002;
     static constexpr int ID_THEME = 1003;
+    static constexpr int ID_VIEW_DETAILS = 10;
+    static constexpr int ID_VIEW_LIST = 11;
+    static constexpr int ID_VIEW_ICONS = 12;
     static constexpr int ID_LISTVIEW = 2001;
     static constexpr int ID_TREEVIEW = 2002;
     static constexpr int ID_SPLITTER = 2003;

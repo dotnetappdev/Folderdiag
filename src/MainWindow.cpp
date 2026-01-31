@@ -14,7 +14,7 @@
 MainWindow::MainWindow() 
     : m_hwnd(nullptr), m_treeView(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
       m_toolbar(nullptr), m_splitter(nullptr), m_sortDescending(true), m_maxSize(0),
-      m_splitterPos(250), m_splitterDragging(false) {
+      m_splitterPos(250), m_splitterDragging(false), m_viewMode(ViewMode::Details) {
     m_scanner = std::make_unique<FolderScanner>();
 }
 
@@ -465,6 +465,18 @@ void MainWindow::OnCommand(WPARAM wParam) {
             
         case ID_PREFERENCES:
             ShowPreferences();
+            break;
+            
+        case ID_VIEW_DETAILS:
+            SetViewMode(ViewMode::Details);
+            break;
+            
+        case ID_VIEW_LIST:
+            SetViewMode(ViewMode::List);
+            break;
+            
+        case ID_VIEW_ICONS:
+            SetViewMode(ViewMode::Icons);
             break;
             
         case IDCANCEL:
@@ -945,4 +957,48 @@ LRESULT CALLBACK MainWindow::SplitterProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     }
     
     return DefSubclassProc(hwnd, uMsg, wParam, lParam);
+}
+
+void MainWindow::SetViewMode(ViewMode mode) {
+    m_viewMode = mode;
+    ApplyViewMode();
+    
+    // Repopulate the list with current items to reflect new view
+    if (m_rootItem) {
+        PopulateListView(m_rootItem);
+    }
+    
+    UpdateStatusBar(L"View mode changed");
+}
+
+void MainWindow::ApplyViewMode() {
+    if (!m_listView) return;
+    
+    // Get current ListView style
+    LONG style = GetWindowLong(m_listView, GWL_STYLE);
+    
+    // Remove all view style bits
+    style &= ~(LVS_ICON | LVS_SMALLICON | LVS_LIST | LVS_REPORT);
+    
+    // Apply new view style
+    switch (m_viewMode) {
+        case ViewMode::Details:
+            style |= LVS_REPORT;
+            break;
+            
+        case ViewMode::List:
+            style |= LVS_LIST;
+            break;
+            
+        case ViewMode::Icons:
+            style |= LVS_ICON;
+            break;
+    }
+    
+    // Apply the style
+    SetWindowLong(m_listView, GWL_STYLE, style);
+    
+    // Force redraw
+    InvalidateRect(m_listView, NULL, TRUE);
+    UpdateWindow(m_listView);
 }
