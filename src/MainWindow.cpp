@@ -11,7 +11,9 @@
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "shlwapi.lib")
-#pragma comment(lib, "shell32.lib")
+
+// Context menu constants
+constexpr UINT MAX_CONTEXT_MENU_CMD_ID = 0x7FFF;
 
 MainWindow::MainWindow() 
     : m_hwnd(nullptr), m_treeView(nullptr), m_listView(nullptr), m_statusBar(nullptr), 
@@ -598,7 +600,6 @@ void MainWindow::OnContextMenu(int x, int y) {
                     HMENU hMenu = CreatePopupMenu();
                     if (hMenu) {
                         // Query the context menu for items
-                        const UINT MAX_CONTEXT_MENU_CMD_ID = 0x7FFF;
                         hr = pContextMenu->QueryContextMenu(hMenu, 0, 1, MAX_CONTEXT_MENU_CMD_ID, CMF_NORMAL | CMF_EXPLORE);
                         if (SUCCEEDED(hr)) {
                             // Convert back to screen coordinates
