@@ -467,6 +467,10 @@ void MainWindow::OnCommand(WPARAM wParam) {
             ShowPreferences();
             break;
             
+        case ID_ABOUT:
+            ShowAbout();
+            break;
+            
         case ID_VIEW_DETAILS:
             SetViewMode(ViewMode::Details);
             break;
@@ -693,6 +697,23 @@ void MainWindow::ShowPreferences() {
             UpdateWindow(m_listView);
         }
     }
+}
+
+void MainWindow::ShowAbout() {
+    DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT), m_hwnd, 
+        [](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> INT_PTR {
+            switch (msg) {
+                case WM_INITDIALOG:
+                    return TRUE;
+                case WM_COMMAND:
+                    if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
+                        EndDialog(hwnd, LOWORD(wParam));
+                        return TRUE;
+                    }
+                    break;
+            }
+            return FALSE;
+        });
 }
 
 void MainWindow::UpdateStatusBar(const std::wstring& text) {

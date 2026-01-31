@@ -5,6 +5,7 @@
 
 // Dialog IDs
 #define IDD_PREFERENCES 200
+#define IDD_ABOUT 201
 
 // Control IDs for preferences dialog
 #define IDC_LABEL1 301
@@ -32,3 +33,4 @@
 
 // Menu IDs
 #define ID_PREFERENCES 1004
+#define ID_ABOUT 1005

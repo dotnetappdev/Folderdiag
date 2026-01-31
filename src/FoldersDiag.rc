@@ -18,6 +18,10 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Preferences...", ID_PREFERENCES
     END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About FoldersDiag...", ID_ABOUT
+    END
 END
 
 IDD_PREFERENCES DIALOGEX 0, 0, 320, 280
@@ -56,5 +60,28 @@ BEGIN
     
     DEFPUSHBUTTON   "OK",IDOK,150,250,70,16
     PUSHBUTTON      "Cancel",IDCANCEL,230,250,70,16
+END
+
+IDD_ABOUT DIALOGEX 0, 0, 280, 200
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About FoldersDiag"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    ICON            IDI_APPICON,IDC_STATIC,10,10,20,20
+    LTEXT           "FoldersDiag",IDC_STATIC,45,10,200,12,SS_NOPREFIX
+    LTEXT           "Version 1.01",IDC_STATIC,45,25,200,8
+    LTEXT           "",IDC_STATIC,10,45,260,1,SS_SUNKEN
+    LTEXT           "Windows 11 File Explorer with Size Analysis",IDC_STATIC,10,55,260,8
+    LTEXT           "",IDC_STATIC,10,70,260,40
+    LTEXT           "Features:",IDC_STATIC,10,75,260,8
+    LTEXT           "• Dual-pane layout with hierarchical navigation",IDC_STATIC,20,88,240,8
+    LTEXT           "• Visual size progress bars with color coding",IDC_STATIC,20,100,240,8
+    LTEXT           "• Customizable RGB color themes",IDC_STATIC,20,112,240,8
+    LTEXT           "• Dark and Light mode support",IDC_STATIC,20,124,240,8
+    LTEXT           "• Windows 11 style ribbon interface",IDC_STATIC,20,136,240,8
+    LTEXT           "",IDC_STATIC,10,150,260,1,SS_SUNKEN
+    LTEXT           "© 2026 NovaDevelop",IDC_STATIC,10,160,260,8,SS_CENTER
+    LTEXT           "All rights reserved.",IDC_STATIC,10,172,260,8,SS_CENTER
+    DEFPUSHBUTTON   "OK",IDOK,110,180,60,14
 END
 

@@ -42,6 +42,7 @@ private:
     void SortBySize();
     void ToggleTheme();
     void ShowPreferences();
+    void ShowAbout();
     void UpdateStatusBar(const std::wstring& text);
     
     // View mode support
