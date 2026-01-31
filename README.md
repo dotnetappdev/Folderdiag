@@ -2,6 +2,15 @@
 
 A modern Windows file explorer application that analyzes and displays the biggest file sizes and directories in an organized column view.
 
+## 📚 Documentation
+
+- **[Quick Start Guide](QUICKSTART.md)** - Get started in 60 seconds
+- **[User Guide](USER_GUIDE.md)** - Comprehensive user manual
+- **[Architecture](ARCHITECTURE.md)** - Technical architecture details
+- **[UI Design](UI_DESIGN.md)** - Visual design documentation
+- **[Contributing](CONTRIBUTING.md)** - How to contribute
+- **[Project Summary](PROJECT_SUMMARY.md)** - Complete project overview
+
 ## Features
 
 - 📊 **Folder Size Analysis**: Scans directories and calculates total sizes including all subdirectories
