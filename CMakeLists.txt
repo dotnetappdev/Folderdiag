@@ -16,6 +16,8 @@ set(SOURCES
     src/FolderScanner.cpp
     src/ThemeManager.cpp
     src/FileSystemItem.cpp
+    src/Settings.cpp
+    src/PreferencesDialog.cpp
 )
 
 set(HEADERS
@@ -23,6 +25,8 @@ set(HEADERS
     src/FolderScanner.h
     src/ThemeManager.h
     src/FileSystemItem.h
+    src/Settings.h
+    src/PreferencesDialog.h
     src/resource.h
 )
 

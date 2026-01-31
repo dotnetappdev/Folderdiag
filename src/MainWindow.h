@@ -34,6 +34,7 @@ private:
     void AddItemToListView(std::shared_ptr<FileSystemItem> item, int indent = 0);
     void SortBySize();
     void ToggleTheme();
+    void ShowPreferences();
     void UpdateStatusBar(const std::wstring& text);
     
     // Custom draw support for progress bars

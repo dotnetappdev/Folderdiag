@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 #include "ThemeManager.h"
+#include "Settings.h"
+#include "PreferencesDialog.h"
 #include "resource.h"
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -287,6 +289,10 @@ void MainWindow::OnCommand(WPARAM wParam) {
             ToggleTheme();
             break;
             
+        case ID_PREFERENCES:
+            ShowPreferences();
+            break;
+            
         case IDCANCEL:
             PostMessage(m_hwnd, WM_CLOSE, 0, 0);
             break;
@@ -488,6 +494,16 @@ void MainWindow::ToggleTheme() {
     UpdateWindow(m_hwnd);
 }
 
+void MainWindow::ShowPreferences() {
+    if (PreferencesDialog::Show(m_hwnd)) {
+        // Colors have been updated, refresh the list view
+        if (m_listView) {
+            InvalidateRect(m_listView, NULL, TRUE);
+            UpdateWindow(m_listView);
+        }
+    }
+}
+
 void MainWindow::UpdateStatusBar(const std::wstring& text) {
     if (m_statusBar) {
         SendMessageW(m_statusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(text.c_str()));
@@ -567,24 +583,20 @@ COLORREF MainWindow::GetSizeColor(uint64_t size, uint64_t maxSize) {
     
     double percentage = static_cast<double>(size) / static_cast<double>(maxSize);
     
-    // Color scale: Blue -> Cyan -> Green -> Yellow -> Orange -> Red
-    if (percentage >= 0.8) {
-        // Red zone (80-100%)
-        return RGB(220, 50, 50);
-    } else if (percentage >= 0.6) {
-        // Orange zone (60-80%)
-        return RGB(255, 140, 50);
-    } else if (percentage >= 0.4) {
-        // Yellow zone (40-60%)
-        return RGB(255, 200, 50);
-    } else if (percentage >= 0.2) {
-        // Green zone (20-40%)
-        return RGB(100, 200, 100);
-    } else if (percentage >= 0.1) {
-        // Cyan zone (10-20%)
-        return RGB(80, 180, 200);
-    } else {
-        // Blue zone (0-10%)
-        return RGB(100, 150, 220);
+    // Get color thresholds from settings
+    const auto& thresholds = Settings::Instance().GetColorThresholds();
+    
+    // Find the appropriate color based on percentage
+    // Thresholds should be sorted in ascending order
+    COLORREF color = RGB(150, 150, 150); // Default gray
+    
+    for (size_t i = 0; i < thresholds.size(); ++i) {
+        if (percentage >= thresholds[i].percentage) {
+            color = thresholds[i].color;
+        } else {
+            break;
+        }
     }
+    
+    return color;
 }
