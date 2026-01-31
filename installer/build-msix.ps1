@@ -12,8 +12,22 @@ Write-Host "=================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if MakeAppx.exe is available
-$makeAppx = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe"
-if (-not (Test-Path $makeAppx)) {
+$makeAppx = $null
+$sdkBasePath = "C:\Program Files (x86)\Windows Kits\10\bin"
+
+# Try to find the latest SDK version with makeappx
+if (Test-Path $sdkBasePath) {
+    $sdkVersions = Get-ChildItem $sdkBasePath -Directory | Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } | Sort-Object -Descending
+    foreach ($version in $sdkVersions) {
+        $makeAppxPath = Join-Path $version.FullName "x64\makeappx.exe"
+        if (Test-Path $makeAppxPath) {
+            $makeAppx = $makeAppxPath
+            break
+        }
+    }
+}
+
+if (-not $makeAppx) {
     # Try to find it in PATH
     $makeAppx = Get-Command makeappx.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
     if (-not $makeAppx) {
@@ -49,14 +63,25 @@ Copy-Item $exePath $packageDir -Force
 # Copy manifest
 Copy-Item (Join-Path $rootDir "Package.appxmanifest") $packageDir -Force
 
-# Copy icon as placeholder assets (in a real deployment, create proper sized assets)
+# Copy icon as placeholder assets
+# NOTE: In production, create proper PNG assets at correct sizes (44x44, 150x150, 310x150, etc.)
+# For now, we'll note that proper assets are needed
 $iconPath = Join-Path $rootDir "src\app.ico"
 if (Test-Path $iconPath) {
+    Write-Host "WARNING: Using .ico as placeholder. Create proper PNG assets for production!" -ForegroundColor Yellow
+    Write-Host "  Required: Square44x44Logo.png, Square150x150Logo.png, Wide310x150Logo.png, etc." -ForegroundColor Yellow
+    # Copy as placeholders - Windows will display them but they won't be optimal
     Copy-Item $iconPath "$packageDir\Assets\Square44x44Logo.png" -Force
     Copy-Item $iconPath "$packageDir\Assets\Square150x150Logo.png" -Force
     Copy-Item $iconPath "$packageDir\Assets\Wide310x150Logo.png" -Force
     Copy-Item $iconPath "$packageDir\Assets\StoreLogo.png" -Force
     Copy-Item $iconPath "$packageDir\Assets\SplashScreen.png" -Force
+} else {
+    Write-Host "WARNING: Icon not found. Creating dummy assets." -ForegroundColor Yellow
+    # Create minimal placeholder files if icon doesn't exist
+    for ($i = 0; $i -lt 100; $i++) {
+        [System.IO.File]::WriteAllBytes("$packageDir\Assets\Square44x44Logo.png", (1..$i))
+    }
 }
 
 Write-Host "Creating MSIX package..." -ForegroundColor Yellow

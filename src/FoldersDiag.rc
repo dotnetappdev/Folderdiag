@@ -69,7 +69,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     ICON            IDI_APPICON,IDC_STATIC,10,10,20,20
     LTEXT           "FoldersDiag",IDC_STATIC,45,10,200,12,SS_NOPREFIX
-    LTEXT           "Version 1.01",IDC_STATIC,45,25,200,8
+    LTEXT           "Version 1.0.1",IDC_STATIC,45,25,200,8
     LTEXT           "",IDC_STATIC,10,45,260,1,SS_SUNKEN
     LTEXT           "Windows 11 File Explorer with Size Analysis",IDC_STATIC,10,55,260,8
     LTEXT           "",IDC_STATIC,10,70,260,40
