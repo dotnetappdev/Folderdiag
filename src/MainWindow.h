@@ -3,6 +3,7 @@
 #include <commctrl.h>
 #include "FolderScanner.h"
 #include "FileSystemItem.h"
+#include "RibbonBar.h"
 #include <memory>
 #include <vector>
 
@@ -57,6 +58,7 @@ private:
     HWND m_toolbar;
     HWND m_splitter;
     
+    std::unique_ptr<RibbonBar> m_ribbon;
     std::unique_ptr<FolderScanner> m_scanner;
     std::shared_ptr<FileSystemItem> m_rootItem;
     std::vector<std::shared_ptr<FileSystemItem>> m_flatList;

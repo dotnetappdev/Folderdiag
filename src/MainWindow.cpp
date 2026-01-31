@@ -240,25 +240,83 @@ void MainWindow::CreateMenuBar() {
 void MainWindow::CreateControls() {
     HINSTANCE hInst = GetModuleHandle(NULL);
     
-    // Create toolbar
-    m_toolbar = CreateWindowExW(
-        0, TOOLBARCLASSNAMEW, NULL,
-        WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS,
-        0, 0, 0, 0,
-        m_hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(3001)), hInst, NULL
-    );
+    // Create Windows 11 style Ribbon Bar
+    m_ribbon = std::make_unique<RibbonBar>();
+    RECT clientRect;
+    GetClientRect(m_hwnd, &clientRect);
+    m_ribbon->Create(m_hwnd, 0, 0, clientRect.right, 0);
     
-    SendMessage(m_toolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+    // Add Home tab
+    RibbonBar::RibbonTab homeTab;
+    homeTab.title = L"Home";
+    homeTab.active = true;
     
-    TBBUTTON tbButtons[] = {
-        { 0, ID_BROWSE, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, reinterpret_cast<INT_PTR>(L"Browse") },
-        { 1, ID_REFRESH, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, reinterpret_cast<INT_PTR>(L"Refresh") },
-        { 0, 0, 0, BTNS_SEP, {0}, 0, 0 },
-        { 2, ID_THEME, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, reinterpret_cast<INT_PTR>(L"Toggle Theme") }
-    };
+    // Clipboard group
+    RibbonBar::RibbonGroup clipboardGroup;
+    clipboardGroup.title = L"Clipboard";
+    clipboardGroup.buttons.push_back({1, L"Copy", L"Copy selected items", true, 0});
+    clipboardGroup.buttons.push_back({2, L"Paste", L"Paste items", true, 0});
+    homeTab.groups.push_back(clipboardGroup);
     
-    SendMessage(m_toolbar, TB_ADDBUTTONSW, 4, reinterpret_cast<LPARAM>(&tbButtons));
-    SendMessage(m_toolbar, TB_AUTOSIZE, 0, 0);
+    // Organize group
+    RibbonBar::RibbonGroup organizeGroup;
+    organizeGroup.title = L"Organize";
+    organizeGroup.buttons.push_back({3, L"New Folder", L"Create a new folder", true, 0});
+    organizeGroup.buttons.push_back({4, L"Delete", L"Delete selected items", true, 0});
+    organizeGroup.buttons.push_back({5, L"Rename", L"Rename selected item", true, 0});
+    homeTab.groups.push_back(organizeGroup);
+    
+    // Navigate group
+    RibbonBar::RibbonGroup navigateGroup;
+    navigateGroup.title = L"Navigate";
+    navigateGroup.buttons.push_back({ID_BROWSE, L"Browse", L"Browse for folder", true, 0});
+    navigateGroup.buttons.push_back({ID_REFRESH, L"Refresh", L"Refresh current view", true, 0});
+    homeTab.groups.push_back(navigateGroup);
+    
+    m_ribbon->AddTab(homeTab);
+    
+    // Add View tab
+    RibbonBar::RibbonTab viewTab;
+    viewTab.title = L"View";
+    viewTab.active = false;
+    
+    // Layout group
+    RibbonBar::RibbonGroup layoutGroup;
+    layoutGroup.title = L"Layout";
+    layoutGroup.buttons.push_back({10, L"Details", L"Details view", true, 0});
+    layoutGroup.buttons.push_back({11, L"List", L"List view", true, 0});
+    layoutGroup.buttons.push_back({12, L"Icons", L"Large icons view", true, 0});
+    viewTab.groups.push_back(layoutGroup);
+    
+    // Show/Hide group
+    RibbonBar::RibbonGroup showHideGroup;
+    showHideGroup.title = L"Show/Hide";
+    showHideGroup.buttons.push_back({13, L"Hidden", L"Show hidden files", true, 0});
+    showHideGroup.buttons.push_back({14, L"Extensions", L"Show file extensions", true, 0});
+    viewTab.groups.push_back(showHideGroup);
+    
+    // Theme group
+    RibbonBar::RibbonGroup themeGroup;
+    themeGroup.title = L"Theme";
+    themeGroup.buttons.push_back({ID_THEME, L"Dark Mode", L"Toggle dark/light theme", true, 0});
+    themeGroup.buttons.push_back({15, L"Preferences", L"Customize colors", true, 0});
+    viewTab.groups.push_back(themeGroup);
+    
+    m_ribbon->AddTab(viewTab);
+    
+    // Add Share tab
+    RibbonBar::RibbonTab shareTab;
+    shareTab.title = L"Share";
+    shareTab.active = false;
+    
+    // Send group
+    RibbonBar::RibbonGroup sendGroup;
+    sendGroup.title = L"Send";
+    sendGroup.buttons.push_back({20, L"Email", L"Send via email", true, 0});
+    sendGroup.buttons.push_back({21, L"Compress", L"Compress and share", true, 0});
+    shareTab.groups.push_back(sendGroup);
+    
+    m_ribbon->AddTab(shareTab);
     
     // Create TreeView for folder navigation
     m_treeView = CreateWindowExW(
@@ -337,15 +395,12 @@ void MainWindow::CreateControls() {
 }
 
 void MainWindow::OnSize(int width, int height) {
-    if (m_toolbar) {
-        SendMessage(m_toolbar, TB_AUTOSIZE, 0, 0);
+    // Update ribbon size
+    int ribbonHeight = 0;
+    if (m_ribbon) {
+        m_ribbon->OnSize(width, height);
+        ribbonHeight = m_ribbon->GetHeight();
     }
-    
-    RECT rcToolbar = {};
-    if (m_toolbar) {
-        GetWindowRect(m_toolbar, &rcToolbar);
-    }
-    int toolbarHeight = rcToolbar.bottom - rcToolbar.top;
     
     RECT rcStatus = {};
     if (m_statusBar) {
@@ -354,8 +409,8 @@ void MainWindow::OnSize(int width, int height) {
     }
     int statusHeight = rcStatus.bottom - rcStatus.top;
     
-    int contentHeight = height - toolbarHeight - statusHeight;
-    int contentTop = toolbarHeight;
+    int contentHeight = height - ribbonHeight - statusHeight;
+    int contentTop = ribbonHeight;
     
     // Ensure splitter position is within bounds
     if (m_splitterPos < 100) m_splitterPos = 100;

@@ -18,6 +18,7 @@ set(SOURCES
     src/FileSystemItem.cpp
     src/Settings.cpp
     src/PreferencesDialog.cpp
+    src/RibbonBar.cpp
 )
 
 set(HEADERS
@@ -27,6 +28,7 @@ set(HEADERS
     src/FileSystemItem.h
     src/Settings.h
     src/PreferencesDialog.h
+    src/RibbonBar.h
     src/resource.h
 )
 
