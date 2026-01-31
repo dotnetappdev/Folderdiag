@@ -17,27 +17,36 @@ A modern Windows file explorer application that analyzes and displays the bigges
 - 📈 **Sortable Columns**: View files and folders sorted by size, name, or other attributes
 - 🎨 **Modern UI**: Clean, modern interface with professional styling
 - 🌓 **Dark/Light Mode**: Toggle between dark and light themes
-- 📁 **Detailed View**: Shows file count, folder count, and full paths
+- 📁 **Windows 11 Style Navigation**: Left pane with special folders (Desktop, Documents, Downloads) and drives
+- 📊 **Visual Size Bars**: Color-coded progress bars showing relative folder sizes
+- 🎀 **Windows 11 Ribbon**: Modern ribbon interface with Home, View, and Share tabs
+- 🖱️ **Shell Context Menus**: Native Windows context menus with shell extension support
 - ⚡ **Fast Scanning**: Asynchronous scanning with progress updates
 - 💻 **Native Performance**: Written in modern C++ for optimal speed
 
 ## Screenshots
 
-### Light Mode
-The application features a clean, modern interface with detailed file and folder information displayed in columns.
+### Main Application Interface
+The application features a modern Windows 11-style interface with dual-pane layout, visual size bars, and comprehensive folder analysis.
 
-![FoldersDiag Light Mode](docs/screenshots/light-mode-placeholder.svg)
+![FoldersDiag Application](https://github.com/user-attachments/assets/367c93c2-b035-482a-886f-acc112f95218)
 
-*Screenshot shows the main window in light mode with toolbar buttons (Browse, Refresh, Toggle Theme), sortable columns (Name, Size, Files, Folders, Path), and folder hierarchy with indentation.*
+*Main window showing:*
+- **Left Pane**: TreeView with special folders (Desktop, Documents, Downloads, etc.) and drive hierarchy
+- **Right Pane**: Detailed list view with sortable columns (Name, Size, Percent, Files, Folders, etc.)
+- **Visual Size Bars**: Color-coded progress bars in the Percent column showing relative sizes
+- **Context Menu**: Right-click support with native Windows shell integration (Locate in Explorer, Properties, Delete, etc.)
+- **Bottom Chart**: Visual bar chart showing folder size distribution
 
-### Dark Mode
-Easy-to-read dark theme for reduced eye strain during extended use.
+### Key Features Visible
+- ✅ **Special Folders**: Desktop, Documents, Downloads, Music, Pictures, Videos in left pane
+- ✅ **This PC Integration**: Drives (C:, D:) with volume labels and size information
+- ✅ **Size Visualization**: Percentage bars with color coding for easy size comparison
+- ✅ **Shell Integration**: Native Windows context menus with all file operations
+- ✅ **Hierarchical View**: Expandable folder tree showing nested structure
+- ✅ **Status Information**: Drive sizes and usage statistics at the bottom
 
-![FoldersDiag Dark Mode](docs/screenshots/dark-mode-placeholder.svg)
-
-*Screenshot shows the same interface in dark mode, demonstrating the theme toggle functionality with comfortable colors for low-light environments.*
-
-> **Note**: The above are placeholder mockups. To add actual screenshots, build and run the application on Windows, capture screenshots in both themes, and replace the placeholder files in `docs/screenshots/`. See [docs/screenshots/README.md](docs/screenshots/README.md) for detailed instructions.
+> **Note**: To capture your own screenshots with the latest features, build and run the application on Windows, and follow the instructions in [docs/screenshots/CAPTURE_GUIDE.md](docs/screenshots/CAPTURE_GUIDE.md).
 
 ## Building the Application
 
@@ -93,27 +102,58 @@ Alternatively, you can open the project directly in Visual Studio 2019 or later:
 
 ## Columns
 
-- **Name**: File or folder name (with indentation for hierarchy)
+The application displays comprehensive folder information in sortable columns:
+
+- **Name**: File or folder name with expandable hierarchy
 - **Size**: Total size in human-readable format (B, KB, MB, GB, TB)
+- **Percent**: Visual progress bar showing relative size percentage
 - **Files**: Number of files in the folder
 - **Folders**: Number of subfolders
-- **Path**: Full path to the item
+- **Created**: Creation date and time
+- **Modified**: Last modification date and time
+- **Accessed**: Last access date and time
+- **Attributes**: File attributes (Hidden, System, Read-only, etc.)
+- **Owner**: File owner information
+
+Click any column header to sort by that attribute.
 
 ## Technical Details
 
 ### Architecture
 
+- **MainWindow**: Main UI window with dual-pane layout (TreeView + ListView)
+- **RibbonBar**: Windows 11 style ribbon interface with tabs and command groups
 - **FileSystemItem**: Data structure representing files and folders
 - **FolderScanner**: Asynchronous folder scanning engine
 - **ThemeManager**: Centralized theme management for dark/light modes
-- **MainWindow**: Main UI window with Win32 controls
+- **Settings**: User preferences and color customization
+
+### Key Components
+
+#### Navigation
+- **TreeView**: Left pane showing special folders (Desktop, Documents, Downloads) and drives
+- **Special Folders**: Integration with Windows shell special folders (CSIDL)
+- **Drive Enumeration**: Automatic detection of fixed, removable, and RAM drives
+
+#### Display
+- **ListView**: Right pane with detailed file/folder information
+- **Size Bars**: Custom-drawn progress bars with gradient colors
+- **Sorting**: Multi-column sorting support
+- **Context Menus**: Native Windows shell context menu integration (IContextMenu)
+
+#### Performance
+- **Asynchronous Scanning**: Non-blocking folder analysis
+- **Lazy Loading**: TreeView subdirectories loaded on-demand
+- **Memory Management**: Proper cleanup of allocated resources
 
 ### Technologies
 
 - Modern C++17
 - Win32 API for native Windows integration
-- Common Controls (ListView, Toolbar, StatusBar)
+- Common Controls (TreeView, ListView, StatusBar)
+- Windows Shell COM interfaces (IShellFolder, IContextMenu)
 - Desktop Window Manager (DWM) API for modern window styling
+- GDI+ for gradient rendering
 - Asynchronous scanning with std::thread
 
 ## License
