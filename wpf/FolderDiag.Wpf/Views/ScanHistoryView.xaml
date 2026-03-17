@@ -1,0 +1,59 @@
+<UserControl x:Class="FolderDiag.Wpf.Views.ScanHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FolderDiag.Wpf.ViewModels"
+             Background="{StaticResource BackgroundBrush}">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Scan History"
+                   FontSize="16" FontWeight="SemiBold"
+                   Foreground="{StaticResource TextPrimaryBrush}"
+                   Margin="0,0,0,12"/>
+
+        <ListView Grid.Row="1"
+                  ItemsSource="{Binding ScanHistory}"
+                  BorderThickness="0">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Path" Width="350"
+                                    DisplayMemberBinding="{Binding Path}"/>
+                    <GridViewColumn Header="Time" Width="140">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:ScanHistoryItemViewModel}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding TimeAgo}" FontSize="12"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding ScanTime, StringFormat=\{0:MMM dd HH:mm\}}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Total Size" Width="100"
+                                    DisplayMemberBinding="{Binding TotalSize}"/>
+                    <GridViewColumn Header="Files" Width="80"
+                                    DisplayMemberBinding="{Binding TotalFiles, StringFormat=\{0:N0\}}"/>
+                    <GridViewColumn Header="Actions" Width="120">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:ScanHistoryItemViewModel}">
+                                <Button Style="{StaticResource ModernButton}"
+                                        Content="Rescan"
+                                        Padding="8,3"
+                                        FontSize="11"
+                                        Command="{Binding DataContext.ScanCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                        CommandParameter="{Binding Path}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>

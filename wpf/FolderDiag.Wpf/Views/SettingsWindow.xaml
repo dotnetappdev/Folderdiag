@@ -1,0 +1,134 @@
+<Window x:Class="FolderDiag.Wpf.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:FolderDiag.Wpf.Converters"
+        Title="Settings"
+        Width="520" Height="560"
+        ResizeMode="NoResize"
+        Background="{StaticResource BackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{StaticResource AppFont}"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Settings"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,20"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Display section -->
+                <TextBlock Text="DISPLAY"
+                           FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           LetterSpacing="1" Margin="0,0,0,8"/>
+
+                <Border Background="{StaticResource BackgroundElevated1Brush}"
+                        CornerRadius="10"
+                        Padding="16,12"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <CheckBox Content="Show size bars in file list"
+                                  IsChecked="{Binding ShowSizeBars}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox Content="Show percentage of parent"
+                                  IsChecked="{Binding ShowPercentage}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox Content="Show file extensions"
+                                  IsChecked="{Binding ShowFileExtensions}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox Content="Show detail pane"
+                                  IsChecked="{Binding ShowDetailPane}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- File visibility section -->
+                <TextBlock Text="FILE VISIBILITY"
+                           FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           LetterSpacing="1" Margin="0,0,0,8"/>
+
+                <Border Background="{StaticResource BackgroundElevated1Brush}"
+                        CornerRadius="10"
+                        Padding="16,12"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <CheckBox Content="Show hidden files and folders"
+                                  IsChecked="{Binding ShowHiddenFiles}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox Content="Show system files"
+                                  IsChecked="{Binding ShowSystemFiles}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox Content="Follow symbolic links"
+                                  IsChecked="{Binding FollowSymlinks}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Search section -->
+                <TextBlock Text="SEARCH"
+                           FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           LetterSpacing="1" Margin="0,0,0,8"/>
+
+                <Border Background="{StaticResource BackgroundElevated1Brush}"
+                        CornerRadius="10"
+                        Padding="16,12"
+                        Margin="0,0,0,16">
+                    <CheckBox Content="Index files for fast search (uses SQLite)"
+                              IsChecked="{Binding IndexForSearch}"/>
+                </Border>
+
+                <!-- Auto-refresh -->
+                <TextBlock Text="AUTO-REFRESH"
+                           FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           LetterSpacing="1" Margin="0,0,0,8"/>
+
+                <Border Background="{StaticResource BackgroundElevated1Brush}"
+                        CornerRadius="10"
+                        Padding="16,12"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <CheckBox Content="Auto-refresh scanned folder"
+                                  IsChecked="{Binding AutoRefresh}"
+                                  Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal"
+                                    IsEnabled="{Binding AutoRefresh}">
+                            <TextBlock Text="Refresh interval (seconds):"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBox Text="{Binding AutoRefreshInterval}"
+                                     Width="60" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button Style="{StaticResource ModernButton}"
+                    Content="Cancel"
+                    Width="90" Margin="0,0,8,0"
+                    IsCancel="True"/>
+            <Button Style="{StaticResource AccentButton}"
+                    Content="Save"
+                    Width="90"
+                    IsDefault="True"
+                    Click="SaveButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

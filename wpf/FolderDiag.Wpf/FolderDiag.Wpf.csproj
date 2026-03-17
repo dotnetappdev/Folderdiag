@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- ApplicationIcon>Resources\app.ico</ApplicationIcon -->
+    <AssemblyTitle>FolderDiag</AssemblyTitle>
+    <AssemblyDescription>Fast folder size analyzer and file explorer</AssemblyDescription>
+    <Company>FolderDiag</Company>
+    <Copyright>Copyright © 2025 FolderDiag</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <RootNamespace>FolderDiag.Wpf</RootNamespace>
+    <Platforms>AnyCPU</Platforms>
+    <Optimize Condition="'$(Configuration)'=='Release'">true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.2.25163.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.2.25163.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.2.25163.2" />
+    <PackageReference Include="Wpf.Ui" Version="4.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FolderDiag.Core\FolderDiag.Core.csproj" />
+    <ProjectReference Include="..\FolderDiag.Data\FolderDiag.Data.csproj" />
+  </ItemGroup>
+
+
+</Project>
