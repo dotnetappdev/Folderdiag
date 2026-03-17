@@ -1,0 +1,56 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\code\\Folderdiag\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C3333333-3333-4333-8333-333333333333}|src\\FolderDiag.Wpf\\FolderDiag.Wpf.csproj|d:\\code\\folderdiag\\src\\folderdiag.wpf\\themes\\moderntheme.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{C3333333-3333-4333-8333-333333333333}|src\\FolderDiag.Wpf\\FolderDiag.Wpf.csproj|solutionrelative:src\\folderdiag.wpf\\themes\\moderntheme.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:136:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ModernTheme.xaml",
+              "DocumentMoniker": "D:\\code\\Folderdiag\\src\\FolderDiag.Wpf\\Themes\\ModernTheme.xaml",
+              "RelativeDocumentMoniker": "src\\FolderDiag.Wpf\\Themes\\ModernTheme.xaml",
+              "ToolTip": "D:\\code\\Folderdiag\\src\\FolderDiag.Wpf\\Themes\\ModernTheme.xaml",
+              "RelativeToolTip": "src\\FolderDiag.Wpf\\Themes\\ModernTheme.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-03-17T18:57:09.239Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

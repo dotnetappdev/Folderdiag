@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "FolderDiag.Core/1.0.0": {
+        "runtime": {
+          "FolderDiag.Core.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FolderDiag.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,12 @@
+D:\code\Folderdiag\src\FolderDiag.Core\bin\Debug\net10.0\FolderDiag.Core.deps.json
+D:\code\Folderdiag\src\FolderDiag.Core\bin\Debug\net10.0\FolderDiag.Core.dll
+D:\code\Folderdiag\src\FolderDiag.Core\bin\Debug\net10.0\FolderDiag.Core.pdb
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.AssemblyInfoInputs.cache
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.AssemblyInfo.cs
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.csproj.CoreCompileInputs.cache
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.sourcelink.json
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.dll
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\refint\FolderDiag.Core.dll
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\FolderDiag.Core.pdb
+D:\code\Folderdiag\src\FolderDiag.Core\obj\Debug\net10.0\ref\FolderDiag.Core.dll
