@@ -1,69 +1,116 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Dark modern color palette (more Windows 11-like) -->
-    <Color x:Key="PrimaryColor">#111827</Color>
-    <Color x:Key="AccentColor">#4A90E2</Color>
-    <Color x:Key="BackgroundColor">#0F1722</Color>
-    <Color x:Key="PanelColor">#11151A</Color>
-    <Color x:Key="BorderColor">#2A2F36</Color>
-    <Color x:Key="TextColor">#E6E6E6</Color>
-    <Color x:Key="HeaderColor">#4A90E2</Color>
+    <!-- ═══════════════════════════════════════════════
+         WINDOWS 11 COLOR PALETTE
+    ═══════════════════════════════════════════════ -->
+    <Color x:Key="Win11BgColor">#F3F3F3</Color>
+    <Color x:Key="Win11PanelColor">#FFFFFF</Color>
+    <Color x:Key="Win11SidebarColor">#F0F0F0</Color>
+    <Color x:Key="Win11RibbonColor">#FAFAFA</Color>
+    <Color x:Key="Win11BorderColor">#E0E0E0</Color>
+    <Color x:Key="Win11TextColor">#1A1A1A</Color>
+    <Color x:Key="Win11SubTextColor">#666666</Color>
+    <Color x:Key="Win11AccentColor">#0078D4</Color>
+    <Color x:Key="Win11AccentHoverColor">#1084D8</Color>
+    <Color x:Key="Win11AccentPressColor">#006CC1</Color>
+    <Color x:Key="Win11SelectColor">#CCE4F7</Color>
+    <Color x:Key="Win11HoverColor">#E5E5E5</Color>
+    <Color x:Key="Win11HeaderBgColor">#F0F0F0</Color>
+    <Color x:Key="Win11StatusBarColor">#F0F0F0</Color>
+    <Color x:Key="Win11GridLineColor">#E8E8E8</Color>
 
     <!-- Brushes -->
-    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
-    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
-    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource PanelColor}" />
-    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
-    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
-    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource HeaderColor}" />
+    <SolidColorBrush x:Key="Win11BgBrush"         Color="{StaticResource Win11BgColor}" />
+    <SolidColorBrush x:Key="Win11PanelBrush"       Color="{StaticResource Win11PanelColor}" />
+    <SolidColorBrush x:Key="Win11SidebarBrush"     Color="{StaticResource Win11SidebarColor}" />
+    <SolidColorBrush x:Key="Win11RibbonBrush"      Color="{StaticResource Win11RibbonColor}" />
+    <SolidColorBrush x:Key="Win11BorderBrush"      Color="{StaticResource Win11BorderColor}" />
+    <SolidColorBrush x:Key="Win11TextBrush"        Color="{StaticResource Win11TextColor}" />
+    <SolidColorBrush x:Key="Win11SubTextBrush"     Color="{StaticResource Win11SubTextColor}" />
+    <SolidColorBrush x:Key="Win11AccentBrush"      Color="{StaticResource Win11AccentColor}" />
+    <SolidColorBrush x:Key="Win11SelectBrush"      Color="{StaticResource Win11SelectColor}" />
+    <SolidColorBrush x:Key="Win11HoverBrush"       Color="{StaticResource Win11HoverColor}" />
+    <SolidColorBrush x:Key="Win11HeaderBgBrush"    Color="{StaticResource Win11HeaderBgColor}" />
+    <SolidColorBrush x:Key="Win11StatusBarBrush"   Color="{StaticResource Win11StatusBarColor}" />
+    <SolidColorBrush x:Key="Win11GridLineBrush"    Color="{StaticResource Win11GridLineColor}" />
+    <SolidColorBrush x:Key="Win11AccentHoverBrush" Color="{StaticResource Win11AccentHoverColor}" />
+    <SolidColorBrush x:Key="TransparentBrush"      Color="Transparent" />
 
-    <!-- DataGrid style -->
-    <Style TargetType="DataGrid">
-        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="RowBackground" Value="#0F1A22" />
-        <Setter Property="AlternatingRowBackground" Value="#0B141A" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="GridLinesVisibility" Value="None" />
+    <!-- ═══════════════════════════════════════════════
+         SCROLLBAR
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.LineUpCommand" Opacity="0" Height="0"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Background="#BBBBBB" CornerRadius="4" Margin="2"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.LineDownCommand" Opacity="0" Height="0"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <!-- Toolbar style -->
-    <Style TargetType="ToolBar">
-        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="6" />
+    <!-- ═══════════════════════════════════════════════
+         WINDOW
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource Win11BgBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
     </Style>
 
-    <!-- Button style with rounded corners implemented in template -->
-    <Style TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="Margin" Value="4,0,4,0" />
-        <Setter Property="Padding" Value="10,6" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+    <!-- ═══════════════════════════════════════════════
+         BUTTON — Windows 11 style
+    ═══════════════════════════════════════════════ -->
+    <Style x:Key="Win11ButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.95" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#D0D0D0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -71,23 +118,485 @@
         </Setter>
     </Style>
 
-    <!-- TreeView style -->
+    <!-- Accent Button (blue) -->
+    <Style x:Key="Win11AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource Win11ButtonStyle}">
+        <Setter Property="Background" Value="{StaticResource Win11AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11AccentBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11AccentHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#006CC1" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Flat Ribbon Button (no border, hover highlight) -->
+    <Style x:Key="RibbonButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#D5D5D5" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Default Button fallback -->
+    <Style TargetType="Button" BasedOn="{StaticResource Win11ButtonStyle}" />
+
+    <!-- ═══════════════════════════════════════════════
+         TEXTBOX
+    ═══════════════════════════════════════════════ -->
+    <Style x:Key="Win11TextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Win11AccentBrush}" />
+                            <Setter TargetName="Bd" Property="BorderThickness" Value="1.5" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#AAAAAA" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="TextBox" BasedOn="{StaticResource Win11TextBoxStyle}" />
+
+    <!-- ═══════════════════════════════════════════════
+         COMBOBOX
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="Height" Value="28" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         TREEVIEW
+    ═══════════════════════════════════════════════ -->
     <Style TargetType="TreeView">
-        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Background" Value="{StaticResource Win11SidebarBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="4" />
     </Style>
 
-    <!-- StatusBar style -->
+    <Style TargetType="TreeViewItem">
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Padding" Value="2,3" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TreeViewItem">
+                    <StackPanel>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="4" Margin="0,1" Padding="2,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ToggleButton x:Name="Expander" Grid.Column="0"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              ClickMode="Press"
+                                              Width="16" Height="16"
+                                              Background="Transparent" BorderThickness="0"
+                                              Focusable="False">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent">
+                                                <TextBlock x:Name="Arrow" Text="▶" FontSize="8"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="#666666"
+                                                           RenderTransformOrigin="0.5,0.5">
+                                                    <TextBlock.RenderTransform>
+                                                        <RotateTransform x:Name="Rot" Angle="0"/>
+                                                    </TextBlock.RenderTransform>
+                                                </TextBlock>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Rot" Property="Angle" Value="90"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter Grid.Column="1" x:Name="PART_Header"
+                                                  ContentSource="Header"
+                                                  VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ItemsPresenter x:Name="ItemsHost" Margin="16,0,0,0"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11SelectBrush}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         DATAGRID
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="DataGrid">
+        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RowBackground" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="AlternatingRowBackground" Value="#F8F8F8" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource Win11GridLineBrush}" />
+        <Setter Property="RowHeight" Value="28" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="CanUserReorderColumns" Value="True" />
+        <Setter Property="CanUserResizeColumns" Value="True" />
+        <Setter Property="CanUserSortColumns" Value="True" />
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource Win11HeaderBgBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="Background" Value="Transparent" />
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource Win11SelectBrush}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True"/>
+                    <Condition Property="IsSelected" Value="False"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{StaticResource Win11HoverBrush}" />
+            </MultiTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         TABCONTROL (main content tabs)
+    ═══════════════════════════════════════════════ -->
+    <Style x:Key="MainTabControl" TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="MainTabItem" TargetType="TabItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="0,0,2,0">
+                        <Border x:Name="Indicator" BorderThickness="0,0,0,2"
+                                BorderBrush="Transparent" Padding="0,0,0,2">
+                            <ContentPresenter ContentSource="Header"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Indicator" Property="BorderBrush" Value="{StaticResource Win11AccentBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Win11AccentBrush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Ribbon Tab style (top ribbon tabs) -->
+    <Style x:Key="RibbonTabItem" TargetType="TabItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="3,3,0,0">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11PanelBrush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="#ECECEC"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         STATUS BAR
+    ═══════════════════════════════════════════════ -->
     <Style TargetType="StatusBar">
-        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="Background" Value="{StaticResource Win11StatusBarBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="FontSize" Value="12" />
     </Style>
 
-    <!-- Window style -->
-    <Style TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <!-- ═══════════════════════════════════════════════
+         PROGRESS BAR
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource Win11AccentBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                        <Border x:Name="PART_Indicator"
+                                HorizontalAlignment="Left"
+                                Background="{TemplateBinding Foreground}"
+                                CornerRadius="2"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         SEPARATOR
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="Separator">
+        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Margin" Value="4,4" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         LISTBOX (for quick access panel)
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="ListBox">
+        <Setter Property="Background" Value="{StaticResource Win11SidebarBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Margin="0,1"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11SelectBrush}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         GRIDSPLITTER
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="GridSplitter">
+        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Width" Value="1" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         CHECKBOX
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         LABEL / TEXTBLOCK
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="Label">
+        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="4,2" />
+    </Style>
+
+    <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="8,8,8,4" />
+        <Setter Property="TextTransform" Value="Uppercase" />
+    </Style>
+
+    <Style x:Key="RibbonGroupLabelStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,2,0,0" />
     </Style>
 
 </ResourceDictionary>

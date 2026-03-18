@@ -3,86 +3,1303 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:FolderDiag.Wpf.Converters"
         mc:Ignorable="d"
-        Title="FolderDiag" Height="700" Width="1100">
+        Title="FolderDiag — Folder Size Analyzer"
+        Height="820" Width="1300"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Win11BgBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+
+    <Window.Resources>
+        <conv:BytesToStringConverter   x:Key="BytesToStr"/>
+        <conv:PercentToBarWidthConverter x:Key="PctToWidth"/>
+        <conv:PercentToColorConverter  x:Key="PctToColor"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:DateTimeFormatConverter  x:Key="DtFmt"/>
+        <conv:AgeDaysToStringConverter x:Key="AgeFmt"/>
+        <conv:ExtensionToIconConverter x:Key="ExtIcon"/>
+    </Window.Resources>
+
     <DockPanel>
-        <ToolBarTray DockPanel.Dock="Top">
-            <ToolBar>
-                <Button x:Name="BtnScan" Click="BtnScan_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="pack://application:,,,/FolderDiag.Wpf;component/Icons/scan.png" Width="20" Height="20" Margin="0,0,6,0" />
-                        <TextBlock>Scan</TextBlock>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="BtnStop" Click="BtnStop_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="pack://application:,,,/FolderDiag.Wpf;component/Icons/stop.png" Width="20" Height="20" Margin="0,0,6,0" />
-                        <TextBlock>Stop</TextBlock>
-                    </StackPanel>
-                </Button>
-                <Separator />
-                <Button x:Name="BtnRefresh" Click="BtnRefresh_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="pack://application:,,,/FolderDiag.Wpf;component/Icons/refresh.png" Width="20" Height="20" Margin="0,0,6,0" />
-                        <TextBlock>Refresh</TextBlock>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="BtnExport" Click="BtnExport_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="pack://application:,,,/FolderDiag.Wpf;component/Icons/export.png" Width="20" Height="20" Margin="0,0,6,0" />
-                        <TextBlock>Export</TextBlock>
-                    </StackPanel>
-                </Button>
-            </ToolBar>
-        </ToolBarTray>
 
-        <StatusBar DockPanel.Dock="Bottom" x:Name="MainStatusBar">
-            <StatusBarItem>
-                <TextBlock x:Name="StatusTotal" Text="Ready" />
-            </StatusBarItem>
-        </StatusBar>
+        <!-- ═══════════════════════════════════════════
+             RIBBON BAR (Tabs: Home | Share | View | Scan | Tools)
+        ═══════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top"
+                Background="{StaticResource Win11RibbonBrush}"
+                BorderBrush="{StaticResource Win11BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="320" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+                <!-- App icon + title -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
+                            VerticalAlignment="Center" Margin="10,0,0,0">
+                    <TextBlock Text="📁" FontSize="20" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="FolderDiag" FontWeight="SemiBold"
+                               Foreground="{StaticResource Win11TextBrush}"
+                               VerticalAlignment="Center" FontSize="14"/>
+                </StackPanel>
 
-            <!-- Left: Tree view of drives/folders -->
-            <Border Grid.Column="0" BorderBrush="#DDD" BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <TextBlock Margin="8" FontWeight="Bold">Folders</TextBlock>
-                    <TreeView x:Name="TreeFolders" SelectedItemChanged="TreeFolders_SelectedItemChanged" Margin="4" />
-                </DockPanel>
-            </Border>
+                <!-- Ribbon Tabs -->
+                <TabControl x:Name="RibbonTabCtrl"
+                            TabStripPlacement="Top"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Margin="10,0,0,0">
 
-            <!-- Splitter placeholder -->
-            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#EEE" />
+                    <!-- ── HOME TAB ── -->
+                    <TabItem Header="Home" Style="{StaticResource RibbonTabItem}">
+                        <Border Background="{StaticResource Win11PanelBrush}"
+                                BorderBrush="{StaticResource Win11BorderBrush}"
+                                BorderThickness="0,1,0,0" Padding="6,4">
+                            <StackPanel Orientation="Horizontal">
 
-            <!-- Right: main content -->
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="220" />
-                </Grid.RowDefinitions>
+                                <!-- Scan Group -->
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnScan" Click="BtnScan_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Scan selected folder for sizes">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔍" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Scan" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnStop" Click="BtnStop_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    IsEnabled="False"
+                                                    ToolTip="Stop current scan">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏹" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Stop" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnRefresh" Click="BtnRefresh_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Refresh current view">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔄" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Refresh" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Scan" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
 
-                <!-- Top-right: Data grid -->
-                <DataGrid x:Name="FoldersGrid" Grid.Row="0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" />
-                        <DataGridTextColumn Header="Size" Binding="{Binding SizeBytes}" Width="160" />
-                        <DataGridTextColumn Header="Scanned At" Binding="{Binding ScannedAt}" Width="200" />
-                    </DataGrid.Columns>
-                </DataGrid>
+                                <!-- File Operations Group -->
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnCopy" Click="BtnCopy_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Copy selected item">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📋" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Copy" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnMove" Click="BtnMove_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Move selected item">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="✂" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Move" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnDelete" Click="BtnDelete_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Delete selected item">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Delete" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnZip" Click="BtnZip_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Compress to ZIP">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗜" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Zip" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="File Operations" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
 
-                <!-- Bottom-right: chart / visualization placeholder -->
-                <Border Grid.Row="1" Margin="8" BorderBrush="#CCC" BorderThickness="1" CornerRadius="4">
+                                <!-- Export Group -->
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnExportCsv" Click="BtnExportCsv_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Export to CSV">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="CSV" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnExportXml" Click="BtnExportXml_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Export to XML">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="XML" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnExportHtml" Click="BtnExportHtml_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Export to HTML Report">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🌐" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="HTML" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Export" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Snapshot Group -->
+                                <Border Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnSnapshot" Click="BtnSnapshot_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Save a snapshot for trend comparison">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📷" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Snapshot" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnCompare" Click="BtnCompare_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Compare two snapshots">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⚖" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Compare" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnSchedule" Click="BtnSchedule_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}"
+                                                    ToolTip="Schedule automatic scans">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🕐" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Schedule" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Analysis" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <!-- ── VIEW TAB ── -->
+                    <TabItem Header="View" Style="{StaticResource RibbonTabItem}">
+                        <Border Background="{StaticResource Win11PanelBrush}"
+                                BorderBrush="{StaticResource Win11BorderBrush}"
+                                BorderThickness="0,1,0,0" Padding="6,4">
+                            <StackPanel Orientation="Horizontal">
+
+                                <!-- Layout Group -->
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnViewDetails" Click="BtnViewDetails_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Details view">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="☰" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Details" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnViewList" Click="BtnViewList_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="List view">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="▤" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="List" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnViewTiles" Click="BtnViewTiles_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Tiles view">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⊞" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Tiles" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Layout" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Show/Hide Group -->
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Margin="0,0,0,2">
+                                            <CheckBox x:Name="ChkShowHidden" Content="Hidden items"
+                                                      Checked="ChkShowHidden_Changed" Unchecked="ChkShowHidden_Changed"/>
+                                            <CheckBox x:Name="ChkShowSystem" Content="System files"
+                                                      Checked="ChkShowSystem_Changed" Unchecked="ChkShowSystem_Changed"/>
+                                            <CheckBox x:Name="ChkShowExtensions" Content="File extensions"
+                                                      IsChecked="True"
+                                                      Checked="ChkShowExtensions_Changed" Unchecked="ChkShowExtensions_Changed"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Show / Hide" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Chart Type Group -->
+                                <Border Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button x:Name="BtnChartBar" Click="BtnChartBar_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Bar chart">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Bar" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnChartPie" Click="BtnChartPie_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Pie chart">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🥧" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Pie" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnChartTreemap" Click="BtnChartTreemap_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Treemap chart">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="▦" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Treemap" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Chart Type" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <!-- ── REPORTS TAB ── -->
+                    <TabItem Header="Reports" Style="{StaticResource RibbonTabItem}">
+                        <Border Background="{StaticResource Win11PanelBrush}"
+                                BorderBrush="{StaticResource Win11BorderBrush}"
+                                BorderThickness="0,1,0,0" Padding="6,4">
+                            <StackPanel Orientation="Horizontal">
+                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button Click="BtnReportLargest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show largest files">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Largest" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="BtnReportOldest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show oldest files">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🕰" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Oldest" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="BtnReportTemp_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show temporary files">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Temp Files" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="BtnReportDuplicates_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Find duplicate files">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="👥" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Duplicates" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="File Reports" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <Button Click="BtnClassifyType_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by file type">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗂" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Type" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="BtnClassifyAge_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by age">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📅" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Age" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Click="BtnClassifyOwner_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by owner">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Owner" FontSize="11" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Text="Classification" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                </TabControl>
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════
+             COMMAND BAR (nav arrows + address bar + search)
+        ═══════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top"
+                Background="{StaticResource Win11PanelBrush}"
+                BorderBrush="{StaticResource Win11BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="6,4">
+            <DockPanel>
+
+                <!-- Back / Forward / Up -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="0,0,4,0">
+                    <Button x:Name="BtnNavBack" Click="BtnNavBack_Click"
+                            Style="{StaticResource RibbonButtonStyle}"
+                            Width="32" Height="32" Padding="0"
+                            IsEnabled="False" ToolTip="Back (Alt+Left)">
+                        <TextBlock Text="←" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                    <Button x:Name="BtnNavForward" Click="BtnNavForward_Click"
+                            Style="{StaticResource RibbonButtonStyle}"
+                            Width="32" Height="32" Padding="0"
+                            IsEnabled="False" ToolTip="Forward (Alt+Right)">
+                        <TextBlock Text="→" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                    <Button x:Name="BtnNavUp" Click="BtnNavUp_Click"
+                            Style="{StaticResource RibbonButtonStyle}"
+                            Width="32" Height="32" Padding="0"
+                            ToolTip="Up one level (Alt+Up)">
+                        <TextBlock Text="↑" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Search box (right side) -->
+                <Border DockPanel.Dock="Right" Width="220"
+                        Background="{StaticResource Win11BgBrush}"
+                        BorderBrush="{StaticResource Win11BorderBrush}"
+                        BorderThickness="1" CornerRadius="16" Margin="4,0,0,0">
                     <Grid>
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#666">Chart / Visualization Area</TextBlock>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="32"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TxtSearch"
+                                 Grid.Column="0"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="10,4"
+                                 VerticalContentAlignment="Center"
+                                 TextChanged="TxtSearch_TextChanged"
+                                 ToolTip="Search (Ctrl+F)"/>
+                        <TextBlock x:Name="SearchPlaceholder"
+                                   Text="Search" IsHitTestVisible="False"
+                                   Foreground="#AAAAAA" Margin="10,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Visibility="Visible"/>
+                        <TextBlock Grid.Column="1" Text="🔍" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="#999999"/>
                     </Grid>
                 </Border>
+
+                <!-- Address bar -->
+                <Border Background="{StaticResource Win11BgBrush}"
+                        BorderBrush="{StaticResource Win11BorderBrush}"
+                        BorderThickness="1" CornerRadius="4" Margin="4,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="📂"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="14" Margin="2,0"/>
+                        <TextBox x:Name="TxtAddressBar"
+                                 Grid.Column="1"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="4,4"
+                                 VerticalContentAlignment="Center"
+                                 FontSize="13"
+                                 KeyDown="TxtAddressBar_KeyDown"/>
+                    </Grid>
+                </Border>
+
+            </DockPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════
+             STATUS BAR
+        ═══════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{StaticResource Win11StatusBarBrush}"
+                BorderBrush="{StaticResource Win11BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <Grid Margin="8,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusTotal"
+                           Grid.Column="0"
+                           Text="Ready — select a folder to scan"
+                           Foreground="{StaticResource Win11SubTextBrush}"
+                           VerticalAlignment="Center"
+                           FontSize="12"/>
+                <TextBlock x:Name="StatusFileCount"
+                           Grid.Column="1"
+                           Text=""
+                           Foreground="{StaticResource Win11SubTextBrush}"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Margin="16,0"/>
+                <ProgressBar x:Name="ScanProgress"
+                             Grid.Column="2"
+                             Height="4"
+                             Minimum="0" Maximum="100" Value="0"
+                             Visibility="Collapsed"
+                             VerticalAlignment="Center"/>
+                <TextBlock x:Name="StatusSize"
+                           Grid.Column="3"
+                           Text=""
+                           Foreground="{StaticResource Win11SubTextBrush}"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Margin="16,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════
+             MAIN BODY: Nav Panel | Splitter | Content
+        ═══════════════════════════════════════════ -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" MinWidth="160" MaxWidth="400"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ───────────────────────────────────────
+                 LEFT NAVIGATION PANEL (Windows 11 Explorer exact replica)
+            ─────────────────────────────────────────── -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource Win11SidebarBrush}"
+                    BorderBrush="{StaticResource Win11BorderBrush}"
+                    BorderThickness="0,0,1,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="4,6,4,6">
+
+                        <!-- ── QUICK ACCESS ── -->
+                        <Button x:Name="BtnToggleQuickAccess" Click="BtnToggleSectionClick"
+                                Tag="QuickAccess" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Padding="4,3" Cursor="Hand">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="IcoQuickAccess" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Quick access" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel x:Name="QuickAccessSection">
+                            <!-- Pinned folders injected at runtime -->
+                            <TreeView x:Name="QuickAccessTree"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      MinHeight="0"
+                                      SelectedItemChanged="NavTree_SelectedItemChanged">
+                            </TreeView>
+                        </StackPanel>
+
+                        <!-- ── THIS PC ── -->
+                        <Button x:Name="BtnToggleThisPC" Click="BtnToggleSectionClick"
+                                Tag="ThisPC" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="IcoThisPC" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="This PC" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel x:Name="ThisPCSection">
+                            <!-- Special folders -->
+                            <TreeViewItem x:Name="NavDesktop" Header="🖥  Desktop"
+                                          Tag="Desktop" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3" Style="{StaticResource {x:Type TreeViewItem}}"/>
+                            <TreeViewItem x:Name="NavDownloads" Header="⬇  Downloads"
+                                          Tag="Downloads" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3"/>
+                            <TreeViewItem x:Name="NavDocuments" Header="📄  Documents"
+                                          Tag="Documents" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3"/>
+                            <TreeViewItem x:Name="NavPictures" Header="🖼  Pictures"
+                                          Tag="Pictures" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3"/>
+                            <TreeViewItem x:Name="NavMusic" Header="🎵  Music"
+                                          Tag="Music" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3"/>
+                            <TreeViewItem x:Name="NavVideos" Header="🎬  Videos"
+                                          Tag="Videos" Selected="NavSpecialFolder_Selected"
+                                          Padding="4,3"/>
+                            <!-- Drives injected at runtime -->
+                            <TreeView x:Name="DrivesTree"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      MinHeight="0"
+                                      SelectedItemChanged="NavTree_SelectedItemChanged">
+                            </TreeView>
+                        </StackPanel>
+
+                        <!-- ── NETWORK ── -->
+                        <Button x:Name="BtnToggleNetwork" Click="BtnToggleSectionClick"
+                                Tag="Network" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="IcoNetwork" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Network" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel x:Name="NetworkSection">
+                            <TreeView x:Name="NetworkTree"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      MinHeight="0"
+                                      SelectedItemChanged="NavTree_SelectedItemChanged">
+                            </TreeView>
+                        </StackPanel>
+
+                        <!-- ── CLOUD STORAGE ── -->
+                        <Button x:Name="BtnToggleCloud" Click="BtnToggleSectionClick"
+                                Tag="Cloud" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="IcoCloud" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Cloud Storage" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel x:Name="CloudSection">
+                            <!-- Injected at runtime based on detected cloud providers -->
+                            <TreeView x:Name="CloudTree"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      MinHeight="0"
+                                      SelectedItemChanged="NavTree_SelectedItemChanged">
+                            </TreeView>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1"
+                          Width="4"
+                          Background="{StaticResource Win11BorderBrush}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"/>
+
+            <!-- ───────────────────────────────────────
+                 RIGHT CONTENT AREA
+            ─────────────────────────────────────────── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="4"/>
+                    <RowDefinition Height="240" MinHeight="120" MaxHeight="480"/>
+                </Grid.RowDefinitions>
+
+                <!-- ── TOP: Main Content Tabs ── -->
+                <TabControl x:Name="MainTabCtrl"
+                            Grid.Row="0"
+                            Style="{StaticResource MainTabControl}"
+                            SelectionChanged="MainTabCtrl_SelectionChanged">
+
+                    <!-- ─── FOLDER SIZES TAB ─── -->
+                    <TabItem Header="📁  Folder Sizes" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Sort/filter bar -->
+                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1"
+                                    Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="0,0,6,0"
+                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                    <ComboBox x:Name="CmbSort" Width="130" Height="26"
+                                              SelectionChanged="CmbSort_Changed">
+                                        <ComboBoxItem Content="Size (largest first)" IsSelected="True"/>
+                                        <ComboBoxItem Content="Name (A→Z)"/>
+                                        <ComboBoxItem Content="Name (Z→A)"/>
+                                        <ComboBoxItem Content="File Count"/>
+                                        <ComboBoxItem Content="Last Modified"/>
+                                    </ComboBox>
+                                    <TextBlock Text="  Min size:" VerticalAlignment="Center"
+                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                    <ComboBox x:Name="CmbMinSize" Width="100" Height="26"
+                                              Margin="6,0" SelectionChanged="CmbMinSize_Changed">
+                                        <ComboBoxItem Content="All sizes" IsSelected="True"/>
+                                        <ComboBoxItem Content="&gt; 1 MB"/>
+                                        <ComboBoxItem Content="&gt; 10 MB"/>
+                                        <ComboBoxItem Content="&gt; 100 MB"/>
+                                        <ComboBoxItem Content="&gt; 1 GB"/>
+                                    </ComboBox>
+                                    <TextBlock Text="  Depth:" VerticalAlignment="Center"
+                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                    <ComboBox x:Name="CmbDepth" Width="90" Height="26"
+                                              Margin="6,0" SelectionChanged="CmbDepth_Changed">
+                                        <ComboBoxItem Content="All" IsSelected="True"/>
+                                        <ComboBoxItem Content="1 level"/>
+                                        <ComboBoxItem Content="2 levels"/>
+                                        <ComboBoxItem Content="3 levels"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Folder Sizes DataGrid -->
+                            <DataGrid x:Name="FoldersGrid"
+                                      Grid.Row="1"
+                                      SelectedCellsChanged="FoldersGrid_SelectionChanged">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Name" Width="220" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📁" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Size" Width="110" SortMemberPath="SizeBytes">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding SizeFormatted}" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="  " Width="130" SortMemberPath="PercentOfParent">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="4,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Height="14" HorizontalAlignment="Left" CornerRadius="2"
+                                                            Width="{Binding PercentOfParent, Converter={StaticResource PctToWidth}, ConverterParameter=120}"
+                                                            Background="{Binding PercentOfParent, Converter={StaticResource PctToColor}}"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="%" Width="60" Binding="{Binding PercentFormatted}" ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                                    <DataGridTemplateColumn Header="Allocated" Width="110" SortMemberPath="AllocatedBytes">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding AllocatedFormatted}" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Files" Width="80"
+                                                        Binding="{Binding FileCountFormatted}"
+                                                        ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                                    <DataGridTextColumn Header="Folders" Width="80"
+                                                        Binding="{Binding FolderCountFormatted}"
+                                                        ElementStyle="{StaticResource {x:Type TextBlock}}"/>
+                                    <DataGridTextColumn Header="Last Modified" Width="155"
+                                                        Binding="{Binding LastModified, Converter={StaticResource DtFmt}}"/>
+                                    <DataGridTextColumn Header="Owner" Width="120"
+                                                        Binding="{Binding Owner}"/>
+                                    <DataGridTextColumn Header="Path" Width="*"
+                                                        Binding="{Binding Path}"/>
+                                </DataGrid.Columns>
+
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📂  Open in Explorer" Click="CtxOpenExplorer_Click"/>
+                                        <MenuItem Header="🔍  Scan this folder" Click="CtxScanFolder_Click"/>
+                                        <MenuItem Header="📌  Pin to Quick Access" Click="CtxPinQuickAccess_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="📋  Copy path" Click="CtxCopyPath_Click"/>
+                                        <MenuItem Header="📊  Export this level as CSV" Click="CtxExportCsv_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="✂  Move to…" Click="CtxMove_Click"/>
+                                        <MenuItem Header="📋  Copy to…" Click="CtxCopy_Click"/>
+                                        <MenuItem Header="🗜  Compress to ZIP" Click="CtxZip_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑  Delete" Click="CtxDelete_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="ℹ  Properties" Click="CtxProperties_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ─── FILE BROWSER TAB (files + folders like Explorer) ─── -->
+                    <TabItem Header="📂  File Browser" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Breadcrumb / path bar -->
+                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="BreadcrumbPath" Text="Select a folder"
+                                               Foreground="{StaticResource Win11SubTextBrush}"
+                                               VerticalAlignment="Center" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Files + Folders DataGrid -->
+                            <DataGrid x:Name="FileBrowserGrid"
+                                      Grid.Row="1"
+                                      SelectedCellsChanged="FileBrowserGrid_SelectionChanged">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Name" Width="260" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Icon}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Type" Width="90" SortMemberPath="Extension">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Extension}" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Size" Width="110" SortMemberPath="SizeBytes">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToStr}}" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Modified" Width="155" Binding="{Binding Modified, Converter={StaticResource DtFmt}}"/>
+                                    <DataGridTextColumn Header="Created"  Width="155" Binding="{Binding Created, Converter={StaticResource DtFmt}}"/>
+                                    <DataGridTextColumn Header="Owner"    Width="110" Binding="{Binding Owner}"/>
+                                </DataGrid.Columns>
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📂  Open" Click="CtxBrowserOpen_Click"/>
+                                        <MenuItem Header="📌  Pin to Quick Access" Click="CtxPinQuickAccess_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="📋  Copy" Click="CtxCopy_Click"/>
+                                        <MenuItem Header="✂  Move to…" Click="CtxMove_Click"/>
+                                        <MenuItem Header="🗜  Compress to ZIP" Click="CtxZip_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="🗑  Delete" Click="CtxDelete_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="ℹ  Properties" Click="CtxProperties_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ─── DISK SPACE TAB ─── -->
+                    <TabItem Header="💽  Disk Space" Style="{StaticResource MainTabItem}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="DiskSpacePanel" Margin="16"/>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- ─── FILE REPORTS TAB ─── -->
+                    <TabItem Header="📋  File Reports" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Report:" VerticalAlignment="Center" Margin="0,0,6,0"
+                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                    <ComboBox x:Name="CmbReportType" Width="180" Height="26"
+                                              SelectionChanged="CmbReportType_Changed">
+                                        <ComboBoxItem Content="Largest Files" IsSelected="True"/>
+                                        <ComboBoxItem Content="Oldest Files"/>
+                                        <ComboBoxItem Content="Newest Files"/>
+                                        <ComboBoxItem Content="Temporary Files"/>
+                                        <ComboBoxItem Content="Duplicate Files (by size)"/>
+                                        <ComboBoxItem Content="Files by Category"/>
+                                        <ComboBoxItem Content="Files by Owner"/>
+                                        <ComboBoxItem Content="Files by Age Bucket"/>
+                                    </ComboBox>
+                                    <TextBlock Text="  Top N:" VerticalAlignment="Center" Margin="8,0,4,0"
+                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                    <ComboBox x:Name="CmbTopN" Width="80" Height="26" SelectionChanged="CmbTopN_Changed">
+                                        <ComboBoxItem Content="50" IsSelected="True"/>
+                                        <ComboBoxItem Content="100"/>
+                                        <ComboBoxItem Content="250"/>
+                                        <ComboBoxItem Content="500"/>
+                                        <ComboBoxItem Content="All"/>
+                                    </ComboBox>
+                                    <Button Content="Run Report" Margin="10,0,0,0" Padding="10,3"
+                                            Height="26" Click="BtnRunReport_Click"
+                                            Style="{StaticResource Win11AccentButtonStyle}"/>
+                                </StackPanel>
+                            </Border>
+                            <DataGrid x:Name="ReportsGrid" Grid.Row="1">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Category" Width="40" SortMemberPath="Category">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}"
+                                                           FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Name"     Width="200" Binding="{Binding Name}"/>
+                                    <DataGridTextColumn Header="Ext"      Width="70"  Binding="{Binding Extension}"/>
+                                    <DataGridTemplateColumn Header="Size" Width="110" SortMemberPath="SizeBytes">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToStr}}" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Modified" Width="155" Binding="{Binding Modified, Converter={StaticResource DtFmt}}"/>
+                                    <DataGridTextColumn Header="Age"      Width="90"  Binding="{Binding AgeInDays, Converter={StaticResource AgeFmt}}"/>
+                                    <DataGridTextColumn Header="Owner"    Width="110" Binding="{Binding Owner}"/>
+                                    <DataGridTextColumn Header="Path"     Width="*"   Binding="{Binding Path}"/>
+                                </DataGrid.Columns>
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📂  Open containing folder" Click="CtxOpenContaining_Click"/>
+                                        <MenuItem Header="🗑  Delete file" Click="CtxDeleteFile_Click"/>
+                                        <MenuItem Header="📋  Copy path" Click="CtxCopyPath_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="ℹ  Properties" Click="CtxProperties_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ─── CLASSIFICATION TAB ─── -->
+                    <TabItem Header="🗂  Classification" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="350"/>
+                            </Grid.ColumnDefinitions>
+                            <DataGrid x:Name="ClassifyGrid" Grid.Column="0">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Category" Width="40">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="16" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Category"   Width="130" Binding="{Binding Category}"/>
+                                    <DataGridTextColumn Header="Extension"  Width="90"  Binding="{Binding Extension}"/>
+                                    <DataGridTemplateColumn Header="Total Size" Width="120" SortMemberPath="TotalSize">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding TotalSize, Converter={StaticResource BytesToStr}}" TextAlignment="Right"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Files" Width="80" Binding="{Binding Count}"/>
+                                    <DataGridTextColumn Header="%" Width="70" Binding="{Binding Percent}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <GridSplitter Grid.Column="1" Width="4"/>
+                            <!-- Pie chart for classification -->
+                            <Border Grid.Column="2" Background="{StaticResource Win11PanelBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="1,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="File Type Distribution"
+                                               FontWeight="SemiBold" Margin="12,10,12,6"
+                                               Foreground="{StaticResource Win11TextBrush}"/>
+                                    <Canvas x:Name="ClassifyPieCanvas" Grid.Row="1" Margin="12"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ─── SEARCH TAB ─── -->
+                    <TabItem Header="🔍  Search" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Search form -->
+                            <Border Grid.Row="0"
+                                    Background="{StaticResource Win11HeaderBgBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}"
+                                    BorderThickness="0,0,0,1" Padding="12,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,4">
+                                        <TextBlock Text="Name contains:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBox x:Name="SrchName" Height="26"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,8,4">
+                                        <TextBlock Text="Extension (e.g. .exe):" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBox x:Name="SrchExt" Height="26"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,4">
+                                        <TextBlock Text="Min size:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <ComboBox x:Name="SrchMinSize" Height="26">
+                                            <ComboBoxItem Content="Any" IsSelected="True"/>
+                                            <ComboBoxItem Content="&gt; 1 MB"/>
+                                            <ComboBoxItem Content="&gt; 10 MB"/>
+                                            <ComboBoxItem Content="&gt; 100 MB"/>
+                                            <ComboBoxItem Content="&gt; 1 GB"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,0">
+                                        <TextBlock Text="Category:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <ComboBox x:Name="SrchCategory" Height="26">
+                                            <ComboBoxItem Content="All" IsSelected="True"/>
+                                            <ComboBoxItem Content="Images"/>
+                                            <ComboBoxItem Content="Video"/>
+                                            <ComboBoxItem Content="Audio"/>
+                                            <ComboBoxItem Content="Documents"/>
+                                            <ComboBoxItem Content="Archives"/>
+                                            <ComboBoxItem Content="Executables"/>
+                                            <ComboBoxItem Content="Temporary"/>
+                                            <ComboBoxItem Content="Source Code"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,8,0">
+                                        <TextBlock Text="Modified within:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <ComboBox x:Name="SrchAge" Height="26">
+                                            <ComboBoxItem Content="Any time" IsSelected="True"/>
+                                            <ComboBoxItem Content="Today"/>
+                                            <ComboBoxItem Content="Last 7 days"/>
+                                            <ComboBoxItem Content="Last 30 days"/>
+                                            <ComboBoxItem Content="Last 90 days"/>
+                                            <ComboBoxItem Content="Last year"/>
+                                            <ComboBoxItem Content="Over 1 year ago"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,8,0">
+                                        <TextBlock Text="Owner:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBox x:Name="SrchOwner" Height="26"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="3" Grid.Row="0" Grid.RowSpan="2"
+                                            Content="Search" Width="90"
+                                            VerticalAlignment="Center" Margin="4,0,0,0"
+                                            Click="BtnSearch_Click"
+                                            Style="{StaticResource Win11AccentButtonStyle}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Search results -->
+                            <DataGrid x:Name="SearchGrid" Grid.Row="1">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Cat" Width="36">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="15" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Name"     Width="200" Binding="{Binding Name}"/>
+                                    <DataGridTextColumn Header="Ext"      Width="70"  Binding="{Binding Extension}"/>
+                                    <DataGridTemplateColumn Header="Size" Width="110" SortMemberPath="SizeBytes">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToStr}}" TextAlignment="Right"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Modified" Width="155" Binding="{Binding Modified, Converter={StaticResource DtFmt}}"/>
+                                    <DataGridTextColumn Header="Owner"    Width="110" Binding="{Binding Owner}"/>
+                                    <DataGridTextColumn Header="Path"     Width="*"   Binding="{Binding FolderPath}"/>
+                                </DataGrid.Columns>
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📂  Open containing folder" Click="CtxOpenContaining_Click"/>
+                                        <MenuItem Header="🗑  Delete" Click="CtxDeleteFile_Click"/>
+                                        <MenuItem Header="📋  Copy path" Click="CtxCopyPath_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- ─── SNAPSHOTS / COMPARE TAB ─── -->
+                    <TabItem Header="📷  Snapshots" Style="{StaticResource MainTabItem}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="320"/>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Snapshot list -->
+                            <Grid Grid.Column="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Saved Snapshots"
+                                           FontWeight="SemiBold" Margin="8,8,8,4"/>
+                                <DataGrid x:Name="SnapshotsGrid"
+                                          Grid.Row="1"
+                                          SelectedCellsChanged="SnapshotsGrid_SelectionChanged">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Name"    Width="*"   Binding="{Binding Name}"/>
+                                        <DataGridTextColumn Header="Date"    Width="120" Binding="{Binding CreatedFormatted}"/>
+                                        <DataGridTemplateColumn Header="Size" Width="90">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding TotalSizeFormatted}" TextAlignment="Right"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8">
+                                    <Button Content="Save New Snapshot" Click="BtnSnapshot_Click"
+                                            Padding="10,5" Style="{StaticResource Win11AccentButtonStyle}" Margin="0,0,6,0"/>
+                                    <Button Content="Delete" Click="BtnDeleteSnapshot_Click"
+                                            Padding="10,5"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <GridSplitter Grid.Column="1" Width="4"/>
+
+                            <!-- Comparison results -->
+                            <Grid Grid.Column="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
+                                        BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Compare: " VerticalAlignment="Center"/>
+                                        <ComboBox x:Name="CmbSnap1" Width="160" Height="26" Margin="0,0,6,0"/>
+                                        <TextBlock Text=" vs " VerticalAlignment="Center"/>
+                                        <ComboBox x:Name="CmbSnap2" Width="160" Height="26" Margin="6,0,6,0"/>
+                                        <Button Content="Compare" Click="BtnRunCompare_Click"
+                                                Padding="10,3" Height="26" Style="{StaticResource Win11AccentButtonStyle}"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid x:Name="CompareGrid" Grid.Row="1">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Folder"     Width="*"   Binding="{Binding FolderPath}"/>
+                                        <DataGridTemplateColumn Header="Before" Width="110" SortMemberPath="SizeBefore">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding SizeBefore, Converter={StaticResource BytesToStr}}" TextAlignment="Right"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="After"  Width="110" SortMemberPath="SizeAfter">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding SizeAfter, Converter={StaticResource BytesToStr}}" TextAlignment="Right"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Change" Width="110" SortMemberPath="Delta">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding DeltaFormatted}" TextAlignment="Right"
+                                                               Foreground="{Binding DeltaColor}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Status" Width="90" Binding="{Binding Status}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+
+                </TabControl>
+
+                <!-- Splitter between top and bottom panels -->
+                <GridSplitter Grid.Row="1"
+                              Height="4"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Background="{StaticResource Win11BorderBrush}"/>
+
+                <!-- ── BOTTOM: Chart Panel ── -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="4"/>
+                        <ColumnDefinition Width="260"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Chart Canvas area -->
+                    <Border Grid.Column="0"
+                            Background="{StaticResource Win11PanelBrush}"
+                            BorderBrush="{StaticResource Win11BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
+                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="ChartTitle" Text="Bar Chart — Folder Sizes"
+                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Text="  (click a bar to drill in)"
+                                               Foreground="{StaticResource Win11SubTextBrush}"
+                                               VerticalAlignment="Center" FontSize="11"/>
+                                </StackPanel>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Auto">
+                                <Canvas x:Name="ChartCanvas" Background="White"
+                                        MinHeight="200" MinWidth="400"
+                                        MouseLeftButtonDown="ChartCanvas_Click"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <GridSplitter Grid.Column="1" Width="4" Background="{StaticResource Win11BorderBrush}"/>
+
+                    <!-- Properties / Details panel -->
+                    <Border Grid.Column="2"
+                            Background="{StaticResource Win11PanelBrush}"
+                            BorderBrush="{StaticResource Win11BorderBrush}"
+                            BorderThickness="1,1,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="DetailsPanel" Margin="12">
+                                <TextBlock Text="Details" FontWeight="SemiBold" FontSize="14"
+                                           Margin="0,0,0,10" Foreground="{StaticResource Win11TextBrush}"/>
+
+                                <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock x:Name="DetName" Text="—" FontWeight="SemiBold" FontSize="14"
+                                           TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Size" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetSize" Grid.Row="0" Grid.Column="1" Text="—" TextWrapping="Wrap" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Allocated" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetAlloc" Grid.Row="1" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Files" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetFiles" Grid.Row="2" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Folders" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetFolders" Grid.Row="3" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="% of Parent" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetPct" Grid.Row="4" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetModified" Grid.Row="5" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Created" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetCreated" Grid.Row="6" Grid.Column="1" Text="—" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Owner" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetOwner" Grid.Row="7" Grid.Column="1" Text="—" TextWrapping="Wrap" Margin="0,3"/>
+
+                                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Path" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetPath" Grid.Row="8" Grid.Column="1" Text="—" TextWrapping="Wrap" FontSize="11" Margin="0,3"/>
+                                </Grid>
+
+                                <!-- Size bar -->
+                                <Separator Margin="0,10"/>
+                                <TextBlock Text="Size vs. parent" Foreground="{StaticResource Win11SubTextBrush}"
+                                           FontSize="11" Margin="0,0,0,4"/>
+                                <Grid Height="12">
+                                    <Rectangle Fill="{StaticResource Win11BorderBrush}" RadiusX="3" RadiusY="3"/>
+                                    <Rectangle x:Name="DetSizeBar" Fill="{StaticResource Win11AccentBrush}"
+                                               RadiusX="3" RadiusY="3"
+                                               HorizontalAlignment="Left" Width="0"/>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
             </Grid>
         </Grid>
+
     </DockPanel>
 </Window>
