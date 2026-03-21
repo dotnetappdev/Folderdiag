@@ -3,6 +3,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -13,5 +14,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+  </ItemGroup>
+  <!-- Windows-specific built-in assemblies for file operations and shell dialogs -->
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 </Project>
