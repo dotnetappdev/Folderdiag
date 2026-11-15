@@ -25,18 +25,28 @@ namespace Files.App.Services.FolderSizes
         public DateTime ScannedAt      { get; set; }
 
         public string SizeFormatted        => FormatBytes(SizeBytes);
+        public string SizeFormattedLong    => FormatBytesLong(SizeBytes);
         public string AllocatedFormatted   => FormatBytes(AllocatedBytes);
+        public string AllocatedFormattedLong => FormatBytesLong(AllocatedBytes);
         public string FileCountFormatted   => FileCount.ToString("N0");
         public string FolderCountFormatted => FolderCount.ToString("N0");
         public string PercentFormatted     => $"{PercentOfParent:F1}%";
 
+        /// <summary>Returns a compact human-readable size string (e.g. "14.47 GB").</summary>
         public static string FormatBytes(long bytes)
         {
             if (bytes >= 1_099_511_627_776L) return $"{bytes / 1_099_511_627_776.0:F2} TB";
             if (bytes >= 1_073_741_824L)     return $"{bytes / 1_073_741_824.0:F2} GB";
             if (bytes >= 1_048_576L)         return $"{bytes / 1_048_576.0:F2} MB";
             if (bytes >= 1_024L)             return $"{bytes / 1_024.0:F1} KB";
-            return $"{bytes} B";
+            return $"{bytes:N0} bytes";
+        }
+
+        /// <summary>Returns "14.47 GB (15,531,241,472 bytes)" — matches FolderSizes long format.</summary>
+        public static string FormatBytesLong(long bytes)
+        {
+            if (bytes < 1_024L) return $"{bytes:N0} bytes";
+            return $"{FormatBytes(bytes)} ({bytes:N0} bytes)";
         }
     }
 

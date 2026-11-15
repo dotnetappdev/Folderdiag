@@ -141,12 +141,13 @@
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
 
 		<!--  Background Image  -->
 		<Image
-			Grid.RowSpan="3"
+			Grid.RowSpan="4"
 			HorizontalAlignment="{x:Bind ViewModel.AppThemeBackgroundImageHorizontalAlignment, Mode=OneWay}"
 			VerticalAlignment="{x:Bind ViewModel.AppThemeBackgroundImageVerticalAlignment, Mode=OneWay}"
 			Opacity="{x:Bind ViewModel.AppThemeBackgroundImageOpacity, Mode=OneWay}"
@@ -161,10 +162,182 @@
 			Loaded="HorizontalMultitaskingControl_Loaded"
 			TabIndex="0" />
 
+		<!--  Menu Bar  -->
+		<MenuBar
+			Grid.Row="1"
+			Background="{ThemeResource App.Theme.BackgroundBrush}"
+			BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+			BorderThickness="0,0,0,1">
+
+			<!--  File  -->
+			<MenuBarItem Title="File">
+				<MenuFlyoutItem Text="New window" Icon="NewWindow" KeyboardAcceleratorTextOverride="Ctrl+N" />
+				<MenuFlyoutItem Text="New tab" Icon="Add" KeyboardAcceleratorTextOverride="Ctrl+T" />
+				<MenuFlyoutItem Text="Open folder…" KeyboardAcceleratorTextOverride="Ctrl+O">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Open folder in new tab">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xED50;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Close tab" KeyboardAcceleratorTextOverride="Ctrl+W">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Exit" KeyboardAcceleratorTextOverride="Alt+F4">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7E8;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+			</MenuBarItem>
+
+			<!--  Edit  -->
+			<MenuBarItem Title="Edit">
+				<MenuFlyoutItem Text="Undo" Icon="Undo" KeyboardAcceleratorTextOverride="Ctrl+Z" />
+				<MenuFlyoutItem Text="Redo" Icon="Redo" KeyboardAcceleratorTextOverride="Ctrl+Y" />
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Cut" Icon="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" />
+				<MenuFlyoutItem Text="Copy" Icon="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" />
+				<MenuFlyoutItem Text="Paste" Icon="Paste" KeyboardAcceleratorTextOverride="Ctrl+V" />
+				<MenuFlyoutItem Text="Copy path" KeyboardAcceleratorTextOverride="Ctrl+Shift+C">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF413;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Select all" KeyboardAcceleratorTextOverride="Ctrl+A">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B3;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Invert selection">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE762;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Rename" Icon="Rename" KeyboardAcceleratorTextOverride="F2" />
+				<MenuFlyoutItem Text="Delete" Icon="Delete" KeyboardAcceleratorTextOverride="Delete" />
+			</MenuBarItem>
+
+			<!--  View  -->
+			<MenuBarItem Title="View">
+				<MenuFlyoutSubItem Text="Layout">
+					<MenuFlyoutItem Text="Details" KeyboardAcceleratorTextOverride="Ctrl+1">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A9;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="List" KeyboardAcceleratorTextOverride="Ctrl+2">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Small icons" KeyboardAcceleratorTextOverride="Ctrl+3">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0E2;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Medium icons" KeyboardAcceleratorTextOverride="Ctrl+4">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0EB;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Large icons" KeyboardAcceleratorTextOverride="Ctrl+5">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0EC;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Tiles" KeyboardAcceleratorTextOverride="Ctrl+6">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF16A;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Columns" KeyboardAcceleratorTextOverride="Ctrl+7">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF1BE;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+					<MenuFlyoutItem Text="Adaptive" KeyboardAcceleratorTextOverride="Ctrl+8">
+						<MenuFlyoutItem.Icon><FontIcon Glyph="&#xF576;" /></MenuFlyoutItem.Icon>
+					</MenuFlyoutItem>
+				</MenuFlyoutSubItem>
+				<MenuFlyoutSeparator />
+				<ToggleMenuFlyoutItem Text="Navigation pane" IsChecked="{x:Bind ViewModel.IsSidebarPaneOpen, Mode=TwoWay}" />
+				<ToggleMenuFlyoutItem Text="Details pane" />
+				<ToggleMenuFlyoutItem Text="Preview pane" />
+				<ToggleMenuFlyoutItem Text="Status bar" IsChecked="True" />
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Show hidden items">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xED1A;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Show file extensions">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A9;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Refresh" KeyboardAcceleratorTextOverride="F5">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+			</MenuBarItem>
+
+			<!--  Go  -->
+			<MenuBarItem Title="Go">
+				<MenuFlyoutItem Text="Back" Icon="Back" KeyboardAcceleratorTextOverride="Alt+Left" />
+				<MenuFlyoutItem Text="Forward" Icon="Forward" KeyboardAcceleratorTextOverride="Alt+Right" />
+				<MenuFlyoutItem Text="Up" KeyboardAcceleratorTextOverride="Alt+Up">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74A;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Home" Icon="Home" KeyboardAcceleratorTextOverride="Alt+Home" />
+				<MenuFlyoutItem Text="This PC">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A0;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Desktop">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FC;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Downloads">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE896;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Documents">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A5;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Pictures">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xEB9F;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Music">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xEC4F;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Videos">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B2;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+			</MenuBarItem>
+
+			<!--  Tools  -->
+			<MenuBarItem Title="Tools">
+				<MenuFlyoutItem Text="Analyse folder">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D2;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Find duplicates">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Take snapshot">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xECA5;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Compare snapshots">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A9;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Open in Terminal">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE756;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Open in VS Code">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE943;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Options" KeyboardAcceleratorTextOverride="Alt+O">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE713;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+			</MenuBarItem>
+
+			<!--  Help  -->
+			<MenuBarItem Title="Help">
+				<MenuFlyoutItem Text="View help" KeyboardAcceleratorTextOverride="F1">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE897;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="Report an issue">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE730;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutSeparator />
+				<MenuFlyoutItem Text="Check for updates">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE895;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+				<MenuFlyoutItem Text="About FolderDiag">
+					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xE946;" /></MenuFlyoutItem.Icon>
+				</MenuFlyoutItem>
+			</MenuBarItem>
+		</MenuBar>
+
 		<!--  Address Bar  -->
 		<uc:NavigationToolbar
 			x:Name="NavToolbar"
-			Grid.Row="1"
+			Grid.Row="2"
 			HorizontalAlignment="Stretch"
 			HorizontalContentAlignment="Stretch"
 			x:Load="False"
@@ -175,7 +348,7 @@
 		<!--  Content Area  -->
 		<controls:SidebarView
 			x:Name="SidebarControl"
-			Grid.Row="2"
+			Grid.Row="3"
 			HorizontalAlignment="Stretch"
 			HorizontalContentAlignment="Stretch"
 			DisplayMode="{x:Bind SidebarAdaptiveViewModel.SidebarDisplayMode, Mode=TwoWay}"
@@ -372,7 +545,7 @@
 		<!--  Review Files Prompt  -->
 		<TeachingTip
 			Title="{helpers:ResourceString Name=Hello}"
-			Grid.RowSpan="3"
+			Grid.RowSpan="4"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Bottom"
 			ActionButtonCommand="{x:Bind ViewModel.ReviewAppCommand}"
@@ -385,7 +558,7 @@
 		<!--  Sponsor Prompt  -->
 		<TeachingTip
 			Title="{helpers:ResourceString Name=Hello}"
-			Grid.RowSpan="3"
+			Grid.RowSpan="4"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Bottom"
 			ActionButtonCommand="{x:Bind ViewModel.SponsorCommand}"
