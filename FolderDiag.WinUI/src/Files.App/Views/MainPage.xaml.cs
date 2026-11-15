@@ -338,6 +338,14 @@ namespace Files.App.Views
 		{
 			// Set the correct tab margin on startup
 			SidebarAdaptiveViewModel.UpdateTabControlMargin();
+			// Sync menu bar toggle with current pane state
+			if (MenuToggleNavPane is not null)
+				MenuToggleNavPane.IsChecked = ViewModel.IsSidebarPaneOpen;
+		}
+
+		private void MenuToggleNavPane_Click(object sender, RoutedEventArgs e)
+		{
+			ViewModel.IsSidebarPaneOpen = MenuToggleNavPane.IsChecked;
 		}
 
 		private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e) => LoadPaneChanged();

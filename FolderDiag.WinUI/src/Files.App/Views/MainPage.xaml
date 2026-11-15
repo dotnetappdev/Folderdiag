@@ -240,10 +240,10 @@
 					</MenuFlyoutItem>
 				</MenuFlyoutSubItem>
 				<MenuFlyoutSeparator />
-				<ToggleMenuFlyoutItem Text="Navigation pane" IsChecked="{x:Bind ViewModel.IsSidebarPaneOpen, Mode=TwoWay}" />
-				<ToggleMenuFlyoutItem Text="Details pane" />
-				<ToggleMenuFlyoutItem Text="Preview pane" />
-				<ToggleMenuFlyoutItem Text="Status bar" IsChecked="True" />
+				<ToggleMenuFlyoutItem x:Name="MenuToggleNavPane" Text="Navigation pane" Click="MenuToggleNavPane_Click" />
+				<ToggleMenuFlyoutItem x:Name="MenuToggleDetailsPane" Text="Details pane" />
+				<ToggleMenuFlyoutItem x:Name="MenuTogglePreviewPane" Text="Preview pane" />
+				<ToggleMenuFlyoutItem x:Name="MenuToggleStatusBar" Text="Status bar" IsChecked="True" />
 				<MenuFlyoutSeparator />
 				<MenuFlyoutItem Text="Show hidden items">
 					<MenuFlyoutItem.Icon><FontIcon Glyph="&#xED1A;" /></MenuFlyoutItem.Icon>
