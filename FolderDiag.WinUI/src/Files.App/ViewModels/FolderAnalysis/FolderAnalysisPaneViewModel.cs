@@ -5,8 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Files.App.Services.FolderSizes;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 using System.IO;
+using Windows.UI;
 
 namespace Files.App.ViewModels.FolderAnalysis
 {
@@ -39,21 +41,41 @@ namespace Files.App.ViewModels.FolderAnalysis
         [ObservableProperty] private int _selectedReportIndex = 0;
         [ObservableProperty] private int _topN               = 50;
 
-        // ── Distribution selector: 0=Age 1=Depth 2=Size ───────────────────
-        [ObservableProperty] private int _selectedDistributionIndex = 0;
+        // ── Distribution selector toggles ────────────────────────────────
+        [ObservableProperty] private int    _selectedDistributionIndex = 0;
+        [ObservableProperty] private bool   _distribByAge   = true;
+        [ObservableProperty] private bool   _distribByDepth = false;
+        [ObservableProperty] private bool   _distribBySize  = false;
 
         // ── Search fields ──────────────────────────────────────────────────
         [ObservableProperty] private string _searchName      = "";
+        [ObservableProperty] private string _searchQuery     = "";   // bound in Search tab
         [ObservableProperty] private string _searchExtension = "";
         [ObservableProperty] private string _searchMinSize   = "";
         [ObservableProperty] private string _searchMaxSize   = "";
         [ObservableProperty] private string _searchMinAge    = "";
         [ObservableProperty] private string _searchMaxAge    = "";
         [ObservableProperty] private string _searchOwner     = "";
-        [ObservableProperty] private bool   _searchReadOnly  = false;
-        [ObservableProperty] private bool   _searchHidden    = false;
-        [ObservableProperty] private bool   _searchTempOnly  = false;
-        [ObservableProperty] private int    _searchResultCount = 0;
+        [ObservableProperty] private bool   _searchReadOnly       = false;
+        [ObservableProperty] private bool   _searchHidden         = false;
+        [ObservableProperty] private bool   _searchTempOnly       = false;
+        [ObservableProperty] private bool   _searchFilterMinSize  = false;
+        [ObservableProperty] private bool   _searchFilterRecent   = false;
+        [ObservableProperty] private bool   _searchFilterHidden   = false;
+        [ObservableProperty] private bool   _searchFilterReadOnly = false;
+        [ObservableProperty] private int    _searchResultCount    = 0;
+        [ObservableProperty] private string _searchResultSummary  = "Enter a pattern and click Search";
+
+        // ── Reports summary ────────────────────────────────────────────────
+        [ObservableProperty] private string _reportSummary = "Choose a report type and click Run";
+
+        // ── Trend labels ───────────────────────────────────────────────────
+        [ObservableProperty] private string _trendGrowthLabel   = "—";
+        [ObservableProperty] private string _trendAvgMonthLabel = "—";
+        [ObservableProperty] private string _trendPointCount    = "0";
+
+        // ── Snapshots ──────────────────────────────────────────────────────
+        [ObservableProperty] private ScanSnapshotEntry? _selectedSnapshot;
 
         // ── Settings ────────────────────────────────────────────────────────
         [ObservableProperty] private string _exportFolder    = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -224,6 +246,8 @@ namespace Files.App.ViewModels.FolderAnalysis
                 _dispatcher.TryEnqueue(() =>
                 {
                     foreach (var i in items) FileReports.Add(i);
+                    long total = items.Sum(i => i.SizeBytes);
+                    ReportSummary = $"{items.Count} items · {FolderSizeResult.FormatBytes(total)}";
                     ScanStatus = $"Report: {items.Count} items";
                 });
             }
@@ -236,11 +260,16 @@ namespace Files.App.ViewModels.FolderAnalysis
         // ══════════════════════════════════════════════════════════════════════
 
         [RelayCommand]
-        private async Task LoadDistributionAsync()
+        private async Task LoadDistributionAsync(string? param = null)
         {
             if (string.IsNullOrEmpty(CurrentPath)) return;
             _cts = new CancellationTokenSource();
             IsScanning = true;
+
+            // Update toggle state from param
+            if (param is "age")   { DistribByAge = true; DistribByDepth = false; DistribBySize = false; SelectedDistributionIndex = 0; }
+            if (param is "depth") { DistribByAge = false; DistribByDepth = true; DistribBySize = false; SelectedDistributionIndex = 1; }
+            if (param is "size")  { DistribByAge = false; DistribByDepth = false; DistribBySize = true; SelectedDistributionIndex = 2; }
 
             try
             {
@@ -358,19 +387,22 @@ namespace Files.App.ViewModels.FolderAnalysis
             IsScanning = true;
             SearchResults.Clear();
 
+            // Merge quick filter toggles into search filter
+            var query = string.IsNullOrWhiteSpace(SearchQuery) ? SearchName : SearchQuery;
+
             try
             {
                 var filter = new SearchFilter
                 {
-                    NamePattern   = SearchName,
+                    NamePattern   = query,
                     Extension     = string.IsNullOrWhiteSpace(SearchExtension) ? null : SearchExtension,
                     Owner         = string.IsNullOrWhiteSpace(SearchOwner) ? null : SearchOwner,
-                    MinSizeBytes  = TryParseSize(SearchMinSize),
+                    MinSizeBytes  = SearchFilterMinSize ? 10_485_760L : TryParseSize(SearchMinSize),
                     MaxSizeBytes  = TryParseSize(SearchMaxSize),
-                    MinAgeDays    = TryParseInt(SearchMinAge),
-                    MaxAgeDays    = TryParseInt(SearchMaxAge),
-                    IsReadOnly    = SearchReadOnly ? true : null,
-                    IsHidden      = SearchHidden   ? true : null,
+                    MinAgeDays    = null,
+                    MaxAgeDays    = SearchFilterRecent ? 90 : TryParseInt(SearchMaxAge),
+                    IsReadOnly    = SearchFilterReadOnly || SearchReadOnly ? true : null,
+                    IsHidden      = SearchFilterHidden   || SearchHidden   ? true : null,
                     IsTemp        = SearchTempOnly ? true : null,
                 };
 
@@ -378,7 +410,8 @@ namespace Files.App.ViewModels.FolderAnalysis
                 _dispatcher.TryEnqueue(() =>
                 {
                     foreach (var r in results) SearchResults.Add(r);
-                    SearchResultCount = results.Count;
+                    SearchResultCount   = results.Count;
+                    SearchResultSummary = $"{results.Count} files found";
                     ScanStatus = $"Search: {results.Count} matches";
                 });
             }
@@ -405,18 +438,32 @@ namespace Files.App.ViewModels.FolderAnalysis
             var root = FolderSizes.FirstOrDefault();
             if (root == null) return;
 
+            long prevSize = TrendPoints.Count > 0 ? TrendPoints[^1].SizeBytes : 0;
             TrendPoints.Add(new TrendPoint
             {
-                Label     = $"Scan {TrendPoints.Count + 1}",
-                Timestamp = DateTime.Now,
-                SizeBytes = root.SizeBytes,
-                FileCount = root.FileCount
+                Label      = $"Scan {TrendPoints.Count + 1}",
+                Timestamp  = DateTime.Now,
+                SizeBytes  = root.SizeBytes,
+                FileCount  = root.FileCount,
+                DeltaBytes = TrendPoints.Count > 0 ? root.SizeBytes - prevSize : 0
             });
 
             // Normalise %
             long max = TrendPoints.Max(p => p.SizeBytes);
             foreach (var p in TrendPoints)
                 p.Percent = max > 0 ? 100.0 * p.SizeBytes / max : 0;
+
+            // Update trend summary labels
+            TrendPointCount = TrendPoints.Count.ToString();
+            if (TrendPoints.Count >= 2)
+            {
+                long first = TrendPoints[0].SizeBytes;
+                long last  = TrendPoints[^1].SizeBytes;
+                long diff  = last - first;
+                TrendGrowthLabel   = $"{(diff >= 0 ? "+" : "")}{FolderSizeResult.FormatBytes(Math.Abs(diff))}";
+                double months      = (TrendPoints[^1].Timestamp - TrendPoints[0].Timestamp).TotalDays / 30.0;
+                TrendAvgMonthLabel = months > 0 ? $"+{FolderSizeResult.FormatBytes((long)(diff / months))}/mo" : "—";
+            }
         }
 
         [RelayCommand]
@@ -559,6 +606,7 @@ namespace Files.App.ViewModels.FolderAnalysis
         public string TotalSizeFormatted => FolderSizeResult.FormatBytes(TotalSize);
         public string AllocatedFormatted => FolderSizeResult.FormatBytes(Allocated);
         public string SavedAtFormatted   => SavedAt.ToString("yyyy-MM-dd HH:mm");
+        public string FileCountFormatted => $"{Files:N0} files · {Folders:N0} dirs";
         public string SummaryLine        => $"{Files:N0} files · {FolderSizeResult.FormatBytes(TotalSize)} · {Folders:N0} folders";
     }
 
@@ -571,5 +619,25 @@ namespace Files.App.ViewModels.FolderAnalysis
 
         public string PercentFormatted => $"{Percent:F1}%";
         public string ValueFormatted   => FolderSizeResult.FormatBytes(Value);
+        public string SizeFormatted    => ValueFormatted;
+        public SolidColorBrush ColorBrush
+        {
+            get
+            {
+                try
+                {
+                    var hex = Color.TrimStart('#');
+                    if (hex.Length == 6)
+                    {
+                        byte r = Convert.ToByte(hex[0..2], 16);
+                        byte g = Convert.ToByte(hex[2..4], 16);
+                        byte b = Convert.ToByte(hex[4..6], 16);
+                        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, r, g, b));
+                    }
+                }
+                catch { }
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0x00, 0x78, 0xD4));
+            }
+        }
     }
 }

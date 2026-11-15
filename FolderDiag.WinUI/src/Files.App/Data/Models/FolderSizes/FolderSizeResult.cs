@@ -1,6 +1,9 @@
 // Copyright (c) FolderDiag Project
 // Licensed under the MIT License.
 
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
+
 namespace Files.App.Services.FolderSizes
 {
     // ─────────────────────────────────────────────────────────────────────────
@@ -135,7 +138,10 @@ namespace Files.App.Services.FolderSizes
         public double Percent   { get; set; }
 
         public string TotalSizeFormatted => FolderSizeResult.FormatBytes(TotalSize);
+        public string SizeFormatted      => TotalSizeFormatted;
         public string PercentFormatted   => $"{Percent:F1}%";
+        public string CountFormatted     => Count.ToString("N0");
+        public double CountPercent       => Percent;
     }
 
     /// <summary>File depth distribution — how many files/bytes exist at each directory depth.</summary>
@@ -147,8 +153,12 @@ namespace Files.App.Services.FolderSizes
         public double Percent   { get; set; }
 
         public string Label              => $"Depth {Depth}";
+        public string DepthLabel         => Label;
         public string TotalSizeFormatted => FolderSizeResult.FormatBytes(TotalSize);
+        public string SizeFormatted      => TotalSizeFormatted;
         public string PercentFormatted   => $"{Percent:F1}%";
+        public string CountFormatted     => FileCount.ToString("N0");
+        public double SizePercent        => Percent;
     }
 
     /// <summary>File size distribution bucket (e.g. "< 1 KB", "1 KB–100 KB", ...).</summary>
@@ -162,6 +172,8 @@ namespace Files.App.Services.FolderSizes
         public string TotalSizeFormatted => FolderSizeResult.FormatBytes(TotalSize);
         public string PercentFormatted   => $"{Percent:F1}%";
         public string CountFormatted     => Count.ToString("N0");
+        public string RangeLabel         => Label;
+        public double CountPercent       => Percent;
     }
 
     /// <summary>Per-owner file grouping for File Owners report.</summary>
@@ -205,8 +217,28 @@ namespace Files.App.Services.FolderSizes
 
         public string SizeFormatted    => FolderSizeResult.FormatBytes(SizeBytes);
         public string PercentFormatted => $"{Percent:F1}%";
-        // Width multiplier 0–1 used by XAML GridUnitType.Star bindings via converter
         public double WidthFraction    => Percent / 100.0;
+        public string Label            => Name;
+        public string Tooltip          => $"{Name} — {SizeFormatted} ({PercentFormatted})";
+        public SolidColorBrush ColorBrush => ParseBrush(Color);
+
+        private static SolidColorBrush ParseBrush(string hex)
+        {
+            try
+            {
+                hex = hex.TrimStart('#');
+                byte a = 255, r, g, b;
+                if (hex.Length == 6)
+                {
+                    r = Convert.ToByte(hex[0..2], 16);
+                    g = Convert.ToByte(hex[2..4], 16);
+                    b = Convert.ToByte(hex[4..6], 16);
+                }
+                else return new SolidColorBrush(Color.FromArgb(255, 0x00, 0x78, 0xD4));
+                return new SolidColorBrush(Color.FromArgb(a, r, g, b));
+            }
+            catch { return new SolidColorBrush(Color.FromArgb(255, 0x00, 0x78, 0xD4)); }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -220,10 +252,13 @@ namespace Files.App.Services.FolderSizes
         public DateTime Timestamp { get; set; }
         public long     SizeBytes { get; set; }
         public int      FileCount { get; set; }
-        public double   Percent   { get; set; }  // % of max in series
+        public double   Percent   { get; set; }
+        public long     DeltaBytes { get; set; }
 
-        public string SizeFormatted => FolderSizeResult.FormatBytes(SizeBytes);
-        public string DateFormatted => Timestamp.ToString("MM/dd HH:mm");
+        public string SizeFormatted      => FolderSizeResult.FormatBytes(SizeBytes);
+        public string DateFormatted      => Timestamp.ToString("MM/dd HH:mm");
+        public string FileCountFormatted => FileCount.ToString("N0");
+        public string DeltaFormatted     => DeltaBytes == 0 ? "—" : $"{(DeltaBytes >= 0 ? "+" : "")}{FolderSizeResult.FormatBytes(Math.Abs(DeltaBytes))}";
     }
 
     /// <summary>Result of comparing two snapshots side by side.</summary>
@@ -238,6 +273,10 @@ namespace Files.App.Services.FolderSizes
         public string BeforeLabel => FolderSizeResult.FormatBytes(SizeBefore);
         public string AfterLabel  => FolderSizeResult.FormatBytes(SizeAfter);
         public bool   IsGrowth    => Delta > 0;
+
+        public string FolderName            => Name;
+        public string DeltaSizeFormatted    => DeltaLabel;
+        public string DeltaPercentFormatted => SizeBefore > 0 ? $"{(Delta >= 0 ? "+" : "")}{100.0 * Delta / SizeBefore:F1}%" : "—";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
