@@ -1969,6 +1969,10 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void MainTabCtrl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!IsLoaded) return;
+            // SelectionChanged bubbles: selecting a row in a DataGrid (or an item in a ComboBox)
+            // inside a tab arrives here too. Only react to the tab itself changing — otherwise
+            // every click on a row reloaded the list, wiping the selection mid double-click.
+            if (!ReferenceEquals(e.OriginalSource, MainTabCtrl)) return;
             switch (MainTabCtrl.SelectedIndex)
             {
                 case 0: LoadFolderSizes(_currentPath); break;
@@ -2056,15 +2060,27 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         // ─── Open items: double-click / Enter, like File Explorer ─────────
         /// <summary>
-        /// The row under the mouse, ignoring clicks on headers, scrollbars and empty space.
-        /// Note: Control.MouseDoubleClick reports the DataGrid itself as OriginalSource, so the
-        /// clicked element has to be found by hit-testing the mouse position.
+        /// Double-click opens (folders navigate, files open in their app) — like File Explorer.
+        /// Detected from the second mouse-down (ClickCount == 2) in the tunnelling Preview event,
+        /// which always arrives with the real element under the mouse, before the DataGrid's own
+        /// cell/row handling can interfere.
         /// </summary>
-        private static object? RowItemUnderMouse(DataGrid grid, MouseButtonEventArgs e)
+        private void Grid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton != MouseButton.Left) return null;
-            if (grid.InputHitTest(e.GetPosition(grid)) is not DependencyObject hit) return null;
-            for (DependencyObject? d = hit; d != null && d != grid; d = ParentOf(d))
+            if (e.ClickCount != 2 || sender is not DataGrid grid) return;
+            object? item = RowItemFrom(grid, e.OriginalSource as DependencyObject)
+                        ?? RowItemFrom(grid, grid.InputHitTest(e.GetPosition(grid)) as DependencyObject);
+            switch (item)
+            {
+                case FolderItem f:    e.Handled = true; OpenFolderItem(f);   break;
+                case BrowserEntry be: e.Handled = true; OpenBrowserEntry(be); break;
+            }
+        }
+
+        /// <summary>The data item of the row containing <paramref name="start"/>; null for headers, scrollbars, empty space.</summary>
+        private static object? RowItemFrom(DataGrid grid, DependencyObject? start)
+        {
+            for (DependencyObject? d = start; d != null && d != grid; d = ParentOf(d))
             {
                 if (d is DataGridRow row) return row.Item;
                 if (d is System.Windows.Controls.Primitives.DataGridColumnHeader or System.Windows.Controls.Primitives.ScrollBar) return null;
@@ -2075,14 +2091,9 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private static DependencyObject? ParentOf(DependencyObject d)
             => d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
 
-        private void FoldersGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void CtxFolderOpen_Click(object sender, RoutedEventArgs e)
         {
-            if (RowItemUnderMouse(FoldersGrid, e) is FolderItem f) { e.Handled = true; OpenFolderItem(f); }
-        }
-
-        private void FileBrowserGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (RowItemUnderMouse(FileBrowserGrid, e) is BrowserEntry be) { e.Handled = true; OpenBrowserEntry(be); }
+            if (FoldersGrid.SelectedItem is FolderItem f) OpenFolderItem(f);
         }
 
         /// <summary>Enter opens the selected item; Backspace goes up a level (both like Explorer).</summary>
@@ -2111,6 +2122,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         private void OpenFolderItem(FolderItem f)
         {
+            StatusTotal.Text = $"Opening {f.Name}…";
             if (f.IsFile)
             {
                 try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(f.Path) { UseShellExecute = true }); }
@@ -2123,6 +2135,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         private void OpenBrowserEntry(BrowserEntry be)
         {
+            StatusTotal.Text = $"Opening {be.Name}…";
             if (be.IsFolder) { NavigateTo(be.Path); return; }
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(be.Path) { UseShellExecute = true }); }
             catch (Exception ex) { StatusTotal.Text = $"Cannot open '{be.Name}': {ex.Message}"; }
