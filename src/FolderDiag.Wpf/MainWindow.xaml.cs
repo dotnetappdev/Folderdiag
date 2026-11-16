@@ -84,6 +84,9 @@ namespace FolderDiag.Wpf
         // ─── State ────────────────────────────────────────────────────────
         private DbContextOptions<FolderDiagDbContext> _dbOpts;
         private CancellationTokenSource? _scanCts;
+        private Task? _scanTask;
+        // Folders we've already auto-scanned this session (prevents re-scan loops on empty/denied folders)
+        private readonly HashSet<string> _autoScanAttempted = new(StringComparer.OrdinalIgnoreCase);
         private string _currentPath = "";
         private readonly List<string> _navHistory = new();
         private int _navIndex = -1;
@@ -411,7 +414,7 @@ namespace FolderDiag.Wpf
         private void NavigateTo(string path)
         {
             if (!Directory.Exists(path) && !File.Exists(path)) return;
-            if (Directory.Exists(path)) path = path.TrimEnd('\\', '/');
+            path = NormalizePath(path);
 
             // History
             if (_navIndex < _navHistory.Count - 1)
@@ -428,6 +431,14 @@ namespace FolderDiag.Wpf
 
             // Refresh active tab
             RefreshCurrentTab();
+        }
+
+        // Full path without a trailing separator — except drive roots, which keep it.
+        // ("C:" on its own means "current directory on drive C", not the drive root.)
+        private static string NormalizePath(string path)
+        {
+            try { path = System.IO.Path.GetFullPath(path); } catch { }
+            return System.IO.Path.TrimEndingDirectorySeparator(path);
         }
 
         private void RefreshCurrentTab()
@@ -447,13 +458,41 @@ namespace FolderDiag.Wpf
             _folderItems.Clear();
             if (string.IsNullOrEmpty(path)) return;
 
+            path = NormalizePath(path);
+
             using var db = new FolderDiagDbContext(_dbOpts);
+
+            // The folder's own row exists once it (or any ancestor) has been scanned
+            var self = db.FolderItems
+                .Where(f => EF.Functions.Collate(f.Path, "NOCASE") == path)
+                .OrderByDescending(f => f.ScannedAt)
+                .FirstOrDefault();
+
             var rows = db.FolderItems
-                .Where(f => f.ParentPath == path || f.Path == path)
+                .Where(f => EF.Functions.Collate(f.ParentPath, "NOCASE") == path)
                 .OrderByDescending(f => f.SizeBytes)
                 .ToList();
 
-            long parentTotal = rows.Sum(r => r.SizeBytes);
+            if (self == null && rows.Count == 0)
+            {
+                // Never scanned: list subfolders so the view isn't blank, then scan automatically.
+                try
+                {
+                    foreach (var dir in Directory.GetDirectories(path))
+                        _folderItems.Add(new FolderItem { Path = dir, Name = System.IO.Path.GetFileName(dir), ParentPath = path });
+                }
+                catch { }
+
+                if (_autoScanAttempted.Add(path))
+                    _ = StartScanAsync(path);
+                else if (_scanTask == null)
+                    StatusTotal.Text = "Not scanned yet — click Scan to calculate folder sizes.";
+
+                DrawChart();
+                return;
+            }
+
+            long parentTotal = self?.SizeBytes > 0 ? self.SizeBytes : rows.Sum(r => r.SizeBytes);
             foreach (var r in rows)
             {
                 r.PercentOfParent = parentTotal > 0 ? 100.0 * r.SizeBytes / parentTotal : 0;
@@ -611,17 +650,35 @@ namespace FolderDiag.Wpf
         private async void BtnScan_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentPath)) return;
+            _autoScanAttempted.Add(NormalizePath(_currentPath));
+            await StartScanAsync(_currentPath);
+        }
 
-            _scanCts = new CancellationTokenSource();
+        // Runs one scan at a time. Starting a new scan (e.g. by navigating to another
+        // unscanned folder) cancels the running one and waits for it to finish first.
+        private async Task StartScanAsync(string scanPath)
+        {
+            scanPath = NormalizePath(scanPath);
+
+            if (_scanTask != null)
+            {
+                _scanCts?.Cancel();
+                try { await _scanTask; } catch { }
+            }
+
+            var cts = new CancellationTokenSource();
+            _scanCts = cts;
             BtnScan.IsEnabled  = false;
             BtnStop.IsEnabled  = true;
             ScanProgress.Visibility = Visibility.Visible;
             ScanProgress.IsIndeterminate = true;
-            StatusTotal.Text   = $"Scanning {_currentPath}…";
+            StatusTotal.Text   = $"Scanning {scanPath}…";
 
+            var task = Task.Run(() => PerformScan(scanPath, cts.Token));
+            _scanTask = task;
             try
             {
-                await Task.Run(() => PerformScan(_currentPath, _scanCts.Token));
+                await task;
                 StatusTotal.Text = "Scan complete.";
             }
             catch (OperationCanceledException)
@@ -634,18 +691,17 @@ namespace FolderDiag.Wpf
             }
             finally
             {
-                BtnScan.IsEnabled  = true;
-                BtnStop.IsEnabled  = false;
-                ScanProgress.Visibility = Visibility.Collapsed;
-                _scanCts?.Dispose();
-                _scanCts = null;
-
-                Dispatcher.Invoke(() =>
+                cts.Dispose();
+                if (ReferenceEquals(_scanTask, task))
                 {
-                    LoadFolderSizes(_currentPath);
-                    LoadFileBrowser(_currentPath);
-                    LoadDiskSpacePanel();
-                });
+                    // Only the most recent scan updates the UI
+                    _scanTask = null;
+                    _scanCts  = null;
+                    BtnScan.IsEnabled  = true;
+                    BtnStop.IsEnabled  = false;
+                    ScanProgress.Visibility = Visibility.Collapsed;
+                    RefreshCurrentTab();
+                }
             }
         }
 
@@ -654,9 +710,11 @@ namespace FolderDiag.Wpf
             using var db = new FolderDiagDbContext(_dbOpts);
 
             // Remove previous scan data for this root
-            var old = db.FolderItems.Where(f => f.Path.StartsWith(rootPath)).ToList();
+            string prefix = rootPath.EndsWith(System.IO.Path.DirectorySeparatorChar)
+                ? rootPath : rootPath + System.IO.Path.DirectorySeparatorChar;
+            var old = db.FolderItems.Where(f => f.Path == rootPath || f.Path.StartsWith(prefix)).ToList();
             db.FolderItems.RemoveRange(old);
-            var oldFiles = db.FileItems.Where(f => f.FolderPath.StartsWith(rootPath)).ToList();
+            var oldFiles = db.FileItems.Where(f => f.FolderPath == rootPath || f.FolderPath.StartsWith(prefix)).ToList();
             db.FileItems.RemoveRange(oldFiles);
             db.SaveChanges();
 
