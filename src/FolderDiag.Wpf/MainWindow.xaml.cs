@@ -117,7 +117,13 @@ namespace FolderDiag.Wpf
             InitializeComponent();
             ThemeManager.Register(this);
             ThemeManager.ThemeChanged += OnThemeChanged;
-            Closed += (_, _) => ThemeManager.ThemeChanged -= OnThemeChanged;
+            Closed += (_, _) =>
+            {
+                ThemeManager.ThemeChanged -= OnThemeChanged;
+                _currentWatcher?.Dispose();
+                foreach (var w in _navWatchers.Values) w.Dispose();
+                _navWatchers.Clear();
+            };
 
             // Store the database in %LocalAppData% so it is writable when installed
             // under Program Files (Inno Setup) or inside an MSIX package.
@@ -229,8 +235,9 @@ namespace FolderDiag.Wpf
 
                 if (drive.IsReady)
                 {
-                    tvi.Items.Add(new TreeViewItem { Header = "Loading…" });
+                    tvi.Items.Add(new TreeViewItem { Header = LoadingHeader });
                     tvi.Expanded += NavTreeItem_Expanded;
+                    tvi.Collapsed += NavTreeItem_Collapsed;
                 }
 
                 DrivesTree.Items.Add(tvi);
@@ -314,9 +321,12 @@ namespace FolderDiag.Wpf
 
         private void AddCloudNode(string label, string path)
         {
-            var tvi = new TreeViewItem { Header = NavHeader(label, ShellIcons.Get(path, true)), Tag = path, ToolTip = path };
-            tvi.Items.Add(new TreeViewItem { Header = "Loading…" });
+            // Use the name Windows shows (e.g. "OneDrive - Personal"), falling back to the provider name
+            string shown = ShellIcons.DisplayName(path) is { Length: > 0 } n ? n : label;
+            var tvi = new TreeViewItem { Header = NavHeader(shown, ShellIcons.Get(path, true)), Tag = path, ToolTip = path };
+            tvi.Items.Add(new TreeViewItem { Header = LoadingHeader });
             tvi.Expanded += NavTreeItem_Expanded;
+            tvi.Collapsed += NavTreeItem_Collapsed;
             CloudTree.Items.Add(tvi);
         }
 
@@ -333,8 +343,9 @@ namespace FolderDiag.Wpf
                     Header = NavHeader(d.Name.TrimEnd('\\'), ShellIcons.Get(d.RootDirectory.FullName, true)),
                     Tag    = d.RootDirectory.FullName
                 };
-                tvi.Items.Add(new TreeViewItem { Header = "Loading…" });
+                tvi.Items.Add(new TreeViewItem { Header = LoadingHeader });
                 tvi.Expanded += NavTreeItem_Expanded;
+                tvi.Collapsed += NavTreeItem_Collapsed;
                 NetworkTree.Items.Add(tvi);
             }
 
@@ -344,38 +355,139 @@ namespace FolderDiag.Wpf
             }
         }
 
+        // ─── Navigation tree: lazy children, Explorer names/order, live sync ───
+        private const string LoadingHeader = "Loading…";
+        private readonly Dictionary<TreeViewItem, FileSystemWatcher> _navWatchers = new();
+
         private void NavTreeItem_Expanded(object sender, RoutedEventArgs e)
         {
-            if (sender is not TreeViewItem tvi) return;
-            if (tvi.Items.Count == 1 && tvi.Items[0] is TreeViewItem placeholder && placeholder.Header?.ToString() == "Loading…")
-            {
-                tvi.Items.Clear();
-                string? path = tvi.Tag as string;
-                if (path == null) return;
+            // Expanded bubbles up the tree: only handle the node that actually expanded
+            if (sender is not TreeViewItem tvi || !ReferenceEquals(e.OriginalSource, tvi)) return;
+            if (tvi.Tag is not string path) return;
 
-                try
-                {
-                    foreach (var dir in Directory.GetDirectories(path))
-                    {
-                        var sub = new TreeViewItem
-                        {
-                            Header = NavHeader(System.IO.Path.GetFileName(dir), ShellIcons.Get(dir, true)),
-                            Tag    = dir
-                        };
-                        try
-                        {
-                            if (Directory.GetDirectories(dir).Length > 0)
-                            {
-                                sub.Items.Add(new TreeViewItem { Header = "Loading…" });
-                                sub.Expanded += NavTreeItem_Expanded;
-                            }
-                        }
-                        catch { }
-                        tvi.Items.Add(sub);
-                    }
-                }
-                catch { }
+            if (tvi.Items.Count == 1 && tvi.Items[0] is TreeViewItem { Header: string h } && h == LoadingHeader)
+                tvi.Items.Clear();
+
+            SyncNavChildren(tvi, path);   // also picks up changes made while it was collapsed
+            WatchNavNode(tvi, path);
+        }
+
+        private void NavTreeItem_Collapsed(object sender, RoutedEventArgs e)
+        {
+            if (sender is not TreeViewItem tvi || !ReferenceEquals(e.OriginalSource, tvi)) return;
+            UnwatchNavNode(tvi);
+        }
+
+        /// <summary>
+        /// Brings a node's children in line with the disk: removes deleted folders, adds new ones,
+        /// refreshes display names, and keeps Explorer's order. Expanded sub-trees are preserved.
+        /// </summary>
+        private void SyncNavChildren(TreeViewItem tvi, string path)
+        {
+            bool showHidden = ChkShowHidden?.IsChecked == true;
+            List<DirectoryInfo> dirs;
+            try
+            {
+                dirs = new DirectoryInfo(path)
+                    .EnumerateDirectories("*", new EnumerationOptions { IgnoreInaccessible = true, AttributesToSkip = 0 })
+                    // Like Explorer's navigation pane: hide hidden folders unless "Hidden items" is on
+                    .Where(d => showHidden || (d.Attributes & FileAttributes.Hidden) == 0)
+                    .ToList();
             }
+            catch { return; }
+
+            var existing = tvi.Items.OfType<TreeViewItem>()
+                .Where(c => c.Tag is string)
+                .ToDictionary(c => (string)c.Tag, StringComparer.OrdinalIgnoreCase);
+            var current = new HashSet<string>(dirs.Select(d => d.FullName), StringComparer.OrdinalIgnoreCase);
+
+            // Removed (or renamed away)
+            foreach (var (p, child) in existing)
+                if (!current.Contains(p)) { UnwatchSubtree(child); tvi.Items.Remove(child); }
+            // Placeholder rows ("Loading…") no longer needed
+            foreach (var ph in tvi.Items.OfType<TreeViewItem>().Where(c => c.Tag is null).ToList()) tvi.Items.Remove(ph);
+
+            // Added / renamed to, plus refresh names of the rest
+            var named = dirs.Select(d => (Dir: d, Name: ShellIcons.FolderDisplayName(d)))
+                            .OrderBy(x => x.Name, ShellIcons.LogicalComparer).ToList();
+            for (int i = 0; i < named.Count; i++)
+            {
+                var (d, name) = named[i];
+                if (!existing.TryGetValue(d.FullName, out var node) || !tvi.Items.Contains(node))
+                    node = CreateFolderNode(d, name);
+                else
+                    node.Header = NavHeader(name, ShellIcons.Get(d.FullName, true));
+
+                // Keep Explorer order
+                int at = tvi.Items.IndexOf(node);
+                if (at != i)
+                {
+                    if (at >= 0) tvi.Items.RemoveAt(at);
+                    tvi.Items.Insert(Math.Min(i, tvi.Items.Count), node);
+                }
+            }
+        }
+
+        private TreeViewItem CreateFolderNode(DirectoryInfo dir, string displayName)
+        {
+            var node = new TreeViewItem
+            {
+                Header  = NavHeader(displayName, ShellIcons.Get(dir.FullName, true)),
+                Tag     = dir.FullName,
+                ToolTip = displayName != dir.Name ? $"{dir.FullName}\n(shown as \"{displayName}\", like File Explorer)" : null,
+            };
+            try
+            {
+                // Cheap "has sub-folders?" check: stops at the first one instead of listing them all
+                if (dir.EnumerateDirectories("*", new EnumerationOptions { IgnoreInaccessible = true }).Any())
+                    node.Items.Add(new TreeViewItem { Header = LoadingHeader });
+            }
+            catch { }
+            node.Expanded  += NavTreeItem_Expanded;
+            node.Collapsed += NavTreeItem_Collapsed;
+            return node;
+        }
+
+        /// <summary>
+        /// Watches an expanded folder so renames, new and deleted folders (including ones
+        /// synced down by OneDrive from another device) show up without a manual refresh.
+        /// </summary>
+        private void WatchNavNode(TreeViewItem tvi, string path)
+        {
+            if (_navWatchers.ContainsKey(tvi)) return;
+            try
+            {
+                var w = new FileSystemWatcher(path)
+                {
+                    NotifyFilter = NotifyFilters.DirectoryName | NotifyFilters.Attributes,
+                    IncludeSubdirectories = false,
+                };
+                var debounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+                debounce.Tick += (_, _) =>
+                {
+                    debounce.Stop();
+                    if (!_navWatchers.ContainsKey(tvi)) return;
+                    ShellIcons.Invalidate(path);
+                    SyncNavChildren(tvi, path);
+                };
+                void Changed(object? _, FileSystemEventArgs __) => Dispatcher.BeginInvoke(() => { debounce.Stop(); debounce.Start(); });
+                w.Created += Changed; w.Deleted += Changed; w.Renamed += Changed; w.Changed += Changed;
+                w.Error += (_, _) => Dispatcher.BeginInvoke(() => { debounce.Stop(); debounce.Start(); }); // buffer overflow: resync
+                w.EnableRaisingEvents = true;
+                _navWatchers[tvi] = w;
+            }
+            catch { /* e.g. some network shares don't support change notifications */ }
+        }
+
+        private void UnwatchNavNode(TreeViewItem tvi)
+        {
+            if (_navWatchers.Remove(tvi, out var w)) w.Dispose();
+        }
+
+        private void UnwatchSubtree(TreeViewItem tvi)
+        {
+            UnwatchNavNode(tvi);
+            foreach (var child in tvi.Items.OfType<TreeViewItem>()) UnwatchSubtree(child);
         }
 
         private void LoadQuickAccess()
@@ -412,7 +524,7 @@ namespace FolderDiag.Wpf
             {
                 var tvi = new TreeViewItem
                 {
-                    Header = NavHeader(System.IO.Path.GetFileName(p.TrimEnd('\\')) is { Length: > 0 } n ? n : p, ShellIcons.Get(p, true)),
+                    Header = NavHeader(ShellIcons.FolderDisplayName(new DirectoryInfo(p)), ShellIcons.Get(p, true)),
                     Tag    = p,
                     ToolTip = p
                 };
@@ -483,8 +595,65 @@ namespace FolderDiag.Wpf
             TxtAddressBar.Text = path;
             BreadcrumbPath.Text = path;
 
+            WatchCurrentFolder(path);
+
             // Refresh active tab
             RefreshCurrentTab();
+        }
+
+        // ─── Live updates for the folder being viewed ────────────────────
+        private FileSystemWatcher? _currentWatcher;
+        private System.Windows.Threading.DispatcherTimer? _currentDebounce;
+        private bool _foldersChangedSinceScan;
+
+        /// <summary>
+        /// Watches the folder on screen. The file browser refreshes itself; the Folder Sizes view
+        /// (which shows the last scan) gets a "changed since last scan" note so sizes are never
+        /// silently stale.
+        /// </summary>
+        private void WatchCurrentFolder(string path)
+        {
+            _currentWatcher?.Dispose();
+            _currentWatcher = null;
+            _foldersChangedSinceScan = false;
+            if (!Directory.Exists(path)) return;
+            try
+            {
+                _currentDebounce ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+                _currentDebounce.Tick -= CurrentFolderChanged;
+                _currentDebounce.Tick += CurrentFolderChanged;
+
+                var w = new FileSystemWatcher(path)
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size
+                                 | NotifyFilters.LastWrite | NotifyFilters.Attributes,
+                    IncludeSubdirectories = false,
+                };
+                void Changed(object? _, FileSystemEventArgs e) => Dispatcher.BeginInvoke(() =>
+                {
+                    if (Directory.Exists(e.FullPath) || e.ChangeType is WatcherChangeTypes.Deleted or WatcherChangeTypes.Renamed)
+                        _foldersChangedSinceScan = true;
+                    _currentDebounce.Stop(); _currentDebounce.Start();
+                });
+                w.Created += Changed; w.Deleted += Changed; w.Renamed += Changed; w.Changed += Changed;
+                w.EnableRaisingEvents = true;
+                _currentWatcher = w;
+            }
+            catch { }
+        }
+
+        private void CurrentFolderChanged(object? sender, EventArgs e)
+        {
+            _currentDebounce?.Stop();
+            ShellIcons.Invalidate(_currentPath);
+            switch (MainTabCtrl.SelectedIndex)
+            {
+                case 1: LoadFileBrowser(_currentPath); break;   // live view of the disk
+                case 0:
+                    if (_foldersChangedSinceScan && _scanTask == null)
+                        StatusTotal.Text = "Folders here changed since the last scan (renamed, added or removed) — press Scan to update sizes.";
+                    break;
+            }
         }
 
         // ─── Theme / settings / zoom ──────────────────────────────────────
@@ -588,8 +757,8 @@ namespace FolderDiag.Wpf
                 // Never scanned: list subfolders so the view isn't blank, then scan automatically.
                 try
                 {
-                    foreach (var dir in Directory.GetDirectories(path))
-                        _folderItems.Add(new FolderItem { Path = dir, Name = System.IO.Path.GetFileName(dir), ParentPath = path });
+                    foreach (var dir in new DirectoryInfo(path).EnumerateDirectories("*", new EnumerationOptions { IgnoreInaccessible = true }))
+                        _folderItems.Add(new FolderItem { Path = dir.FullName, Name = ShellIcons.FolderDisplayName(dir), ParentPath = path });
                 }
                 catch { }
 
@@ -606,6 +775,7 @@ namespace FolderDiag.Wpf
             foreach (var r in rows)
             {
                 r.PercentOfParent = parentTotal > 0 ? 100.0 * r.SizeBytes / parentTotal : 0;
+                try { r.Name = ShellIcons.FolderDisplayName(new DirectoryInfo(r.Path)); } catch { } // Explorer's name
                 _folderItems.Add(r);
             }
 
@@ -636,7 +806,7 @@ namespace FolderDiag.Wpf
                     _browserItems.Add(new BrowserEntry
                     {
                         IsFolder  = true,
-                        Name      = di.Name,
+                        Name      = ShellIcons.FolderDisplayName(di),   // e.g. "Belgeler" shows as "Documents"
                         Path      = di.FullName,
                         Extension = "",
                         Modified  = di.LastWriteTime,

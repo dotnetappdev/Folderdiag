@@ -614,6 +614,27 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="4,6,4,6">
 
+                        <!-- ── CLOUD STORAGE (top, like Windows 11: OneDrive first) ── -->
+                        <Button x:Name="BtnToggleCloud" Click="BtnToggleSectionClick"
+                                Tag="Cloud" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="IcoCloud" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Cloud storage" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
+                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel x:Name="CloudSection">
+                            <!-- Injected at runtime based on detected cloud providers -->
+                            <TreeView x:Name="CloudTree"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      MinHeight="0"
+                                      SelectedItemChanged="NavTree_SelectedItemChanged">
+                            </TreeView>
+                        </StackPanel>
+
                         <!-- ── QUICK ACCESS ── -->
                         <Button x:Name="BtnToggleQuickAccess" Click="BtnToggleSectionClick"
                                 Tag="QuickAccess" Background="Transparent" BorderThickness="0"
@@ -695,26 +716,6 @@
                             </TreeView>
                         </StackPanel>
 
-                        <!-- ── CLOUD STORAGE ── -->
-                        <Button x:Name="BtnToggleCloud" Click="BtnToggleSectionClick"
-                                Tag="Cloud" Background="Transparent" BorderThickness="0"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="IcoCloud" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Cloud Storage" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
-                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
-                            </StackPanel>
-                        </Button>
-                        <StackPanel x:Name="CloudSection">
-                            <!-- Injected at runtime based on detected cloud providers -->
-                            <TreeView x:Name="CloudTree"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      MinHeight="0"
-                                      SelectedItemChanged="NavTree_SelectedItemChanged">
-                            </TreeView>
-                        </StackPanel>
 
                     </StackPanel>
                 </ScrollViewer>

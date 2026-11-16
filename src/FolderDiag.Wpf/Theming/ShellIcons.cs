@@ -28,6 +28,62 @@ namespace FolderDiag.Wpf.Theming
         private static readonly HashSet<string> PerFileIconExtensions =
             new(StringComparer.OrdinalIgnoreCase) { ".exe", ".lnk", ".ico", ".url", ".appref-ms", ".cur", ".ani" };
         private static HashSet<string>? _specialFolders;
+        private static readonly ConcurrentDictionary<string, string> DisplayNames = new(StringComparer.OrdinalIgnoreCase);
+
+        // ── Display names ─────────────────────────────────────────────
+        /// <summary>
+        /// The name File Explorer shows for a folder. Usually the folder's own name, but
+        /// customised folders can show a different, localised name from their desktop.ini —
+        /// e.g. a OneDrive "Belgeler" folder (Turkish) shows as "Documents", and the
+        /// OneDrive root as "OneDrive - Personal". Only folders Windows marks as customised
+        /// (read-only or system attribute) are asked, so ordinary folders cost nothing.
+        /// </summary>
+        public static string FolderDisplayName(DirectoryInfo dir)
+        {
+            string name = dir.Name;
+            try
+            {
+                bool customised = (dir.Attributes & (FileAttributes.ReadOnly | FileAttributes.System)) != 0
+                                  || IsSpecialFolder(dir.FullName.TrimEnd('\\'));
+                if (!customised) return name;
+            }
+            catch { return name; }
+            return DisplayName(dir.FullName) ?? name;
+        }
+
+        /// <summary>Shell display name for any path (cached), or null if unavailable.</summary>
+        public static string? DisplayName(string path)
+        {
+            if (!OperatingSystem.IsWindows() || string.IsNullOrEmpty(path)) return null;
+            if (DisplayNames.TryGetValue(path, out var cached)) return cached;
+            var info = new SHFILEINFO();
+            try
+            {
+                if (SHGetFileInfo(path, 0, ref info, (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_DISPLAYNAME) == IntPtr.Zero
+                    || string.IsNullOrWhiteSpace(info.szDisplayName))
+                    return null;
+                return DisplayNames[path] = info.szDisplayName;
+            }
+            catch { return null; }
+        }
+
+        /// <summary>Forget cached names/icons under a folder (after a rename or desktop.ini change).</summary>
+        public static void Invalidate(string path)
+        {
+            foreach (var key in DisplayNames.Keys)
+                if (key.StartsWith(path, StringComparison.OrdinalIgnoreCase)) DisplayNames.TryRemove(key, out _);
+            foreach (var key in Cache.Keys)
+                if (key.StartsWith("path:" + path, StringComparison.OrdinalIgnoreCase) ||
+                    key.StartsWith("file:" + path, StringComparison.OrdinalIgnoreCase)) Cache.TryRemove(key, out _);
+        }
+
+        /// <summary>File Explorer's sort order: "Folder 2" before "Folder 10", case-insensitive.</summary>
+        public static readonly IComparer<string> LogicalComparer = Comparer<string>.Create((a, b) =>
+        {
+            if (OperatingSystem.IsWindows())
+                try { return StrCmpLogicalW(a ?? "", b ?? ""); } catch { }
+            return StringComparer.CurrentCultureIgnoreCase.Compare(a, b);
+        });
 
         /// <summary>Icon for a folder, drive or file. Returns null if Windows can't supply one.</summary>
         public static ImageSource? Get(string? path, bool isDirectory)
@@ -103,6 +159,7 @@ namespace FolderDiag.Wpf.Theming
 
         // ── Win32 ─────────────────────────────────────────────────────
         private const uint SHGFI_ICON = 0x000000100;
+        private const uint SHGFI_DISPLAYNAME = 0x000000200;
         private const uint SHGFI_LARGEICON = 0x000000000;
         private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
         private const uint FILE_ATTRIBUTE_DIRECTORY = 0x10;
@@ -120,6 +177,9 @@ namespace FolderDiag.Wpf.Theming
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        private static extern int StrCmpLogicalW(string psz1, string psz2);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool DestroyIcon(IntPtr hIcon);
