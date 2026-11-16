@@ -231,7 +231,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           # On manual runs the tag is created at the commit that was built
           tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
