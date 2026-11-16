@@ -21,6 +21,7 @@ namespace FolderDiag.Data
             modelBuilder.Entity<FolderItem>().Ignore(f => f.PercentFormatted);
             modelBuilder.Entity<FolderItem>().Ignore(f => f.IsFile);      // view-only
             modelBuilder.Entity<FolderItem>().Ignore(f => f.IsScanned);   // view-only
+            modelBuilder.Entity<FolderItem>().Ignore(f => f.IsParentLink); // view-only
 
             modelBuilder.Entity<FileItem>().HasKey(f => f.Id);
             modelBuilder.Entity<FileItem>().Ignore(f => f.SizeFormatted);

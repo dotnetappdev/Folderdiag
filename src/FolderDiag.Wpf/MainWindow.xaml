@@ -794,6 +794,7 @@
                             <DataGrid x:Name="FoldersGrid"
                                       Grid.Row="1"
                                       SelectedCellsChanged="FoldersGrid_SelectionChanged"
+                                      Sorting="Grid_Sorting"
                                       PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
                                       PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
                                       MouseMove="Grid_MouseMove"
@@ -899,6 +900,7 @@
                             <DataGrid x:Name="FileBrowserGrid"
                                       Grid.Row="1"
                                       SelectedCellsChanged="FileBrowserGrid_SelectionChanged"
+                                      Sorting="Grid_Sorting"
                                       PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
                                       PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
                                       MouseMove="Grid_MouseMove"
@@ -926,7 +928,7 @@
                                     <DataGridTemplateColumn Header="Size" Width="110" SortMemberPath="SizeBytes">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding SizeBytes, Converter={StaticResource BytesToStr}}" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding SizeText}" TextAlignment="Right" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>

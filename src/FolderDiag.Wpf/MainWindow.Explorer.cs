@@ -23,14 +23,17 @@ namespace FolderDiag.Wpf
     public partial class MainWindow
     {
         // ── The item a grid row represents ────────────────────────────
-        private readonly record struct Entry(string Path, string Name, bool IsFolder);
+        private readonly record struct Entry(string Path, string Name, bool IsFolder, bool IsParentLink = false);
 
         private static Entry? EntryOf(object? item) => item switch
         {
-            FolderItem f   => new Entry(f.Path, f.Name, !f.IsFile),
-            BrowserEntry b => new Entry(b.Path, b.Name, b.IsFolder),
+            FolderItem f   => new Entry(f.Path, f.Name, !f.IsFile, f.IsParentLink),
+            BrowserEntry b => new Entry(b.Path, b.Name, b.IsFolder, b.IsParentLink),
             _              => null,
         };
+
+        /// <summary>The selected item, unless it's the ".." row (which can be opened but not renamed, deleted or copied).</summary>
+        private static Entry? EditableEntryOf(object? item) => EntryOf(item) is Entry { IsParentLink: false } e ? e : null;
 
         private DataGrid? ActiveGrid => MainTabCtrl.SelectedIndex switch
         {
@@ -105,19 +108,20 @@ namespace FolderDiag.Wpf
             if (sender is not DataGrid grid) return;
             var mods = Keyboard.Modifiers;
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
-            Entry? sel = EntryOf(grid.SelectedItem);
+            Entry? sel = EntryOf(grid.SelectedItem);          // anything, including ".." (open)
+            Entry? editable = EditableEntryOf(grid.SelectedItem); // real items only (rename/delete/copy)
 
             bool handled = true;
             switch (key)
             {
                 case Key.Enter when mods == ModifierKeys.None && sel is Entry s:           OpenEntry(s); break;
-                case Key.Enter when mods == ModifierKeys.Alt && sel is Entry s:            ShowProperties(s.Path); break;
+                case Key.Enter when mods == ModifierKeys.Alt && editable is Entry s:       ShowProperties(s.Path); break;
                 case Key.Back when mods == ModifierKeys.None:                              BtnNavUp_Click(sender, e); break;
                 case Key.F5:                                                               RefreshView(); break;
-                case Key.F2 when sel is Entry s:                                           RenameEntry(s); break;
-                case Key.Delete when sel is Entry s:                                       DeleteEntry(s, permanently: mods.HasFlag(ModifierKeys.Shift)); break;
-                case Key.C when mods == ModifierKeys.Control && sel is Entry s:            CopyToClipboard(s, cut: false); break;
-                case Key.X when mods == ModifierKeys.Control && sel is Entry s:            CopyToClipboard(s, cut: true); break;
+                case Key.F2 when editable is Entry s:                                      RenameEntry(s); break;
+                case Key.Delete when editable is Entry s:                                  DeleteEntry(s, permanently: mods.HasFlag(ModifierKeys.Shift)); break;
+                case Key.C when mods == ModifierKeys.Control && editable is Entry s:       CopyToClipboard(s, cut: false); break;
+                case Key.X when mods == ModifierKeys.Control && editable is Entry s:       CopyToClipboard(s, cut: true); break;
                 case Key.V when mods == ModifierKeys.Control:                              PasteFromClipboard(); break;
                 case Key.N when mods == (ModifierKeys.Control | ModifierKeys.Shift):       CreateNewFolder(); break;
                 default: handled = false; break;
@@ -137,7 +141,7 @@ namespace FolderDiag.Wpf
             _typeAhead += e.Text;
 
             var match = grid.Items.Cast<object>()
-                .FirstOrDefault(i => EntryOf(i) is Entry en && en.Name.StartsWith(_typeAhead, StringComparison.CurrentCultureIgnoreCase));
+                .FirstOrDefault(i => EditableEntryOf(i) is Entry en && en.Name.StartsWith(_typeAhead, StringComparison.CurrentCultureIgnoreCase));
             if (match != null)
             {
                 grid.SelectedItem = match;
@@ -152,6 +156,64 @@ namespace FolderDiag.Wpf
             ShellIcons.Invalidate(_currentPath);
             RefreshCurrentTab();
             StatusTotal.Text = "Refreshed.";
+        }
+
+        // ── Column sorting with ".." pinned to the top ───────────────
+        // The default DataGrid sort would move ".." and sorted *Formatted text columns as
+        // strings ("1,234" before "200"). Sort by the underlying values instead.
+        private static readonly Dictionary<string, string> SortKeyFor = new()
+        {
+            ["SizeFormatted"] = "SizeBytes", ["AllocatedFormatted"] = "AllocatedBytes",
+            ["FileCountFormatted"] = "FileCount", ["FolderCountFormatted"] = "FolderCount",
+            ["PercentFormatted"] = "PercentOfParent", ["SizeText"] = "SizeBytes",
+        };
+
+        private void Grid_Sorting(object sender, DataGridSortingEventArgs e)
+        {
+            if (sender is not DataGrid grid) return;
+            e.Handled = true;
+
+            var dir = e.Column.SortDirection == System.ComponentModel.ListSortDirection.Ascending
+                ? System.ComponentModel.ListSortDirection.Descending
+                : System.ComponentModel.ListSortDirection.Ascending;
+            foreach (var c in grid.Columns) if (c != e.Column) c.SortDirection = null;
+            e.Column.SortDirection = dir;
+
+            string member = e.Column.SortMemberPath;
+            if (string.IsNullOrEmpty(member) && e.Column is DataGridBoundColumn { Binding: System.Windows.Data.Binding b })
+                member = b.Path.Path;
+            if (SortKeyFor.TryGetValue(member, out var key)) member = key;
+
+            if (System.Windows.Data.CollectionViewSource.GetDefaultView(grid.ItemsSource) is System.Windows.Data.ListCollectionView view)
+                view.CustomSort = new ParentFirstComparer(member, dir == System.ComponentModel.ListSortDirection.Descending);
+        }
+
+        /// <summary>Keeps ".." first, then compares a property: numbers/dates by value, text like Explorer.</summary>
+        private sealed class ParentFirstComparer : System.Collections.IComparer
+        {
+            private readonly string _member;
+            private readonly bool _descending;
+            private System.Reflection.PropertyInfo? _prop;
+            public ParentFirstComparer(string member, bool descending) { _member = member; _descending = descending; }
+
+            public int Compare(object? x, object? y)
+            {
+                bool px = EntryOf(x) is { IsParentLink: true }, py = EntryOf(y) is { IsParentLink: true };
+                if (px || py) return px == py ? 0 : px ? -1 : 1;   // ".." always on top, either direction
+
+                _prop ??= x?.GetType().GetProperty(_member);
+                object? a = _prop?.GetValue(x), b = _prop?.GetValue(y);
+                int r = (a, b) switch
+                {
+                    (null, null) => 0,
+                    (null, _)    => -1,
+                    (_, null)    => 1,
+                    (string sa, string sb) => ShellIcons.LogicalComparer.Compare(sa, sb),
+                    (IComparable ca, _)    => ca.CompareTo(b),
+                    _ => 0,
+                };
+                return _descending ? -r : r;
+            }
         }
 
         // ── Delete (Recycle Bin / permanent) via the Windows shell ────

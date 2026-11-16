@@ -214,8 +214,8 @@ namespace FolderDiag.Wpf.Theming
     {
         public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is FolderDiag.Core.Models.FolderItem item)   // Folder Sizes rows: folder or file
-                return ShellIcons.Get(item.Path, isDirectory: !item.IsFile);
+            if (value is FolderDiag.Core.Models.FolderItem item)   // Folder Sizes rows: folder, file or ".."
+                return item.IsParentLink ? ShellIcons.Folder : ShellIcons.Get(item.Path, isDirectory: !item.IsFile);
             string? s = value?.ToString();
             return (parameter as string) switch
             {

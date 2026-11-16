@@ -38,9 +38,14 @@ namespace FolderDiag.Wpf
         public DateTime? Modified { get; set; }
         public DateTime? Created  { get; set; }
         public string? Owner     { get; set; }
+        /// <summary>The ".." row that goes up to the parent folder.</summary>
+        public bool   IsParentLink { get; set; }
+        /// <summary>Like Explorer: folders show no size.</summary>
+        public string SizeText   => IsFolder || IsParentLink ? "" : FolderItem.FormatBytes(SizeBytes);
         public string Icon       => IsFolder ? "📁" : GetFileIcon(Extension);
         /// <summary>The Windows shell icon (same as File Explorer).</summary>
-        public ImageSource? IconImage => FolderDiag.Wpf.Theming.ShellIcons.Get(Path, IsFolder);
+        public ImageSource? IconImage => IsParentLink ? FolderDiag.Wpf.Theming.ShellIcons.Folder
+                                                      : FolderDiag.Wpf.Theming.ShellIcons.Get(Path, IsFolder);
 
         private static string GetFileIcon(string ext) => ext.ToLowerInvariant() switch
         {
@@ -774,6 +779,15 @@ namespace FolderDiag.Wpf
         /// The disk decides what is listed, so deleted folders disappear and new ones appear even
         /// before a rescan; the scan database only supplies folder sizes.
         /// </summary>
+        /// <summary>Folder Sizes rows without the ".." row (for charts, totals and exports).</summary>
+        private IEnumerable<FolderItem> RealFolderItems => _folderItems.Where(f => !f.IsParentLink);
+
+        /// <summary>The folder ".." should go to, or null at the top of a drive/share.</summary>
+        private static string? ParentLinkFor(string path)
+        {
+            try { return Directory.GetParent(path)?.FullName; } catch { return null; }
+        }
+
         private void LoadFolderSizes(string path)
         {
             _folderItems.Clear();
@@ -842,6 +856,10 @@ namespace FolderDiag.Wpf
                 i.PercentOfParent = total > 0 && i.IsScanned ? 100.0 * i.SizeBytes / total : 0;
 
             // Biggest first; not-yet-scanned folders after scanned ones, then by name
+            // ".." first (except at the top of a drive), then biggest first; not-yet-scanned
+            // folders after scanned ones, then by name
+            if (ParentLinkFor(path) is string parent)
+                _folderItems.Add(new FolderItem { Path = parent, Name = "..", IsParentLink = true, IsScanned = false });
             foreach (var i in items.OrderByDescending(i => i.IsScanned)
                                    .ThenByDescending(i => i.SizeBytes)
                                    .ThenBy(i => i.Name, ShellIcons.LogicalComparer))
@@ -877,6 +895,9 @@ namespace FolderDiag.Wpf
             bool showHidden = ChkShowHidden.IsChecked == true;
             bool showSystem = ChkShowSystem.IsChecked == true;
             bool showExt    = ChkShowExtensions.IsChecked == true;
+
+            if (ParentLinkFor(path) is string parentDir)
+                _browserItems.Add(new BrowserEntry { Name = "..", Path = parentDir, IsFolder = true, IsParentLink = true });
 
             try
             {
@@ -1282,7 +1303,7 @@ namespace FolderDiag.Wpf
         private void DrawChart()
         {
             ChartCanvas.Children.Clear();
-            var items = _folderItems.Take(20).ToList();
+            var items = RealFolderItems.Take(20).ToList();
             if (!items.Any()) return;
 
             switch (_chartType)
@@ -1547,12 +1568,13 @@ namespace FolderDiag.Wpf
         // ─── Status update ────────────────────────────────────────────────
         private void UpdateStatus()
         {
-            long totalSize  = _folderItems.Sum(f => f.SizeBytes);
-            int  directFiles = _folderItems.Count(f => f.IsFile);
-            int  totalFiles = _folderItems.Sum(f => f.FileCount) + directFiles;
-            int  totalFolders = _folderItems.Count(f => !f.IsFile) + _folderItems.Sum(f => f.FolderCount);
+            var real = RealFolderItems.ToList();
+            long totalSize  = real.Sum(f => f.SizeBytes);
+            int  directFiles = real.Count(f => f.IsFile);
+            int  totalFiles = real.Sum(f => f.FileCount) + directFiles;
+            int  totalFolders = real.Count(f => !f.IsFile) + real.Sum(f => f.FolderCount);
 
-            StatusTotal.Text     = $"{_folderItems.Count(f => !f.IsFile):N0} folders, {directFiles:N0} files in view";
+            StatusTotal.Text     = $"{real.Count(f => !f.IsFile):N0} folders, {directFiles:N0} files in view";
             StatusFileCount.Text = $"   {totalFiles:N0} files  |  {totalFolders:N0} sub-folders";
             StatusSize.Text      = $"Total: {FolderItem.FormatBytes(totalSize)}";
         }
@@ -1768,7 +1790,7 @@ namespace FolderDiag.Wpf
 
             var sb = new StringBuilder();
             sb.AppendLine("Name,Path,Size (Bytes),Size (Human),Files,Folders,% of Parent,Last Modified,Owner");
-            foreach (var f in _folderItems)
+            foreach (var f in RealFolderItems)
                 sb.AppendLine(string.Join(",",
                     Csv(f.Name), Csv(f.Path), f.SizeBytes.ToString(CultureInfo.InvariantCulture), Csv(f.SizeFormatted),
                     f.FileCount.ToString(CultureInfo.InvariantCulture), f.FolderCount.ToString(CultureInfo.InvariantCulture),
@@ -1796,7 +1818,7 @@ namespace FolderDiag.Wpf
                 new XElement("FolderReport",
                     new XAttribute("GeneratedAt", DateTime.Now),
                     new XAttribute("Root", _currentPath),
-                    _folderItems.Select(f =>
+                    RealFolderItems.Select(f =>
                         new XElement("Folder",
                             new XAttribute("Name",         f.Name),
                             new XAttribute("Path",         f.Path),
@@ -1837,7 +1859,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             sb.Append($"<h1>FolderDiag Report</h1><p>Root: <strong>{Html(_currentPath)}</strong> — Generated: {DateTime.Now:yyyy-MM-dd HH:mm}</p>");
             sb.Append("<table><thead><tr><th>Name</th><th>Size</th><th>Bar</th><th>%</th><th>Files</th><th>Folders</th><th>Last Modified</th><th>Owner</th></tr></thead><tbody>");
 
-            foreach (var f in _folderItems)
+            foreach (var f in RealFolderItems)
             {
                 int barW = (int)Math.Min(200, f.PercentOfParent * 2);
                 sb.Append($"<tr><td>{Html(f.Name)}</td><td>{f.SizeFormatted}</td><td><div class='bar' style='width:{barW}px'></div></td><td>{f.PercentFormatted}</td><td>{f.FileCountFormatted}</td><td>{f.FolderCountFormatted}</td><td>{f.LastModified:yyyy-MM-dd HH:mm}</td><td>{Html(f.Owner)}</td></tr>");
@@ -1859,8 +1881,8 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // ─── File operations ──────────────────────────────────────────────
         private string? GetSelectedFolderPath()
         {
-            if (FoldersGrid.SelectedItem is FolderItem fi) return fi.IsFile ? null : fi.Path;
-            if (FileBrowserGrid.SelectedItem is BrowserEntry be) return be.Path;
+            if (FoldersGrid.SelectedItem is FolderItem fi) return fi.IsFile || fi.IsParentLink ? null : fi.Path;
+            if (FileBrowserGrid.SelectedItem is BrowserEntry be) return be.IsParentLink ? null : be.Path;
             return null;
         }
 
@@ -1930,7 +1952,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
             // Same as the Delete key: Windows' own Recycle Bin confirmation and progress
-            if (EntryOf(ActiveGrid?.SelectedItem) is Entry selected)
+            if (EditableEntryOf(ActiveGrid?.SelectedItem) is Entry selected)
             {
                 DeleteEntry(selected, permanently: Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
                 return;
@@ -2075,7 +2097,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             SearchPlaceholder.Visibility = string.IsNullOrEmpty(TxtSearch.Text) ? Visibility.Visible : Visibility.Collapsed;
             if (string.IsNullOrEmpty(term)) { LoadFolderSizes(_currentPath); return; }
 
-            var filtered = _folderItems.Where(f =>
+            var filtered = _folderItems.Where(f => f.IsParentLink ||
                 f.Name.ToLowerInvariant().Contains(term) ||
                 f.Path.ToLowerInvariant().Contains(term)).ToList();
 
@@ -2110,7 +2132,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // Grid selections
         private void FoldersGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e)
         {
-            if (FoldersGrid.SelectedItem is FolderItem f)
+            if (FoldersGrid.SelectedItem is FolderItem { IsParentLink: false } f)
                 UpdateDetails(f);
         }
         // Single click only selects (like File Explorer) so folders can be selected and right-clicked;
@@ -2328,8 +2350,8 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void CtxDelete_Click(object sender, RoutedEventArgs e)      => BtnDelete_Click(sender, e);
         private void CtxProperties_Click(object sender, RoutedEventArgs e)
         {
-            if (EntryOf(FoldersGrid.SelectedItem) is Entry f && MainTabCtrl.SelectedIndex == 0) ShowProperties(f.Path);
-            else if (EntryOf(FileBrowserGrid.SelectedItem) is Entry b) ShowProperties(b.Path);
+            if (EditableEntryOf(FoldersGrid.SelectedItem) is Entry f && MainTabCtrl.SelectedIndex == 0) ShowProperties(f.Path);
+            else if (EditableEntryOf(FileBrowserGrid.SelectedItem) is Entry b) ShowProperties(b.Path);
             else if (GetSelectedFolderPath() is string p) ShowProperties(p);
         }
 

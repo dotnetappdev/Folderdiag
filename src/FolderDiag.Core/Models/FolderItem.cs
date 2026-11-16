@@ -25,12 +25,14 @@ namespace FolderDiag.Core.Models
         // folders alongside scanned folders, like File Explorer.
         public bool IsFile    { get; set; }
         public bool IsScanned { get; set; } = true;
+        /// <summary>The ".." row that goes up to the parent folder.</summary>
+        public bool IsParentLink { get; set; }
 
-        public string SizeFormatted => IsScanned ? FormatBytes(SizeBytes) : "Not scanned";
-        public string AllocatedFormatted => IsScanned ? FormatBytes(AllocatedBytes) : "";
-        public string FileCountFormatted => IsFile || !IsScanned ? "" : FileCount.ToString("N0");
-        public string FolderCountFormatted => IsFile || !IsScanned ? "" : FolderCount.ToString("N0");
-        public string PercentFormatted => $"{PercentOfParent:F1}%";
+        public string SizeFormatted => IsParentLink ? "" : IsScanned ? FormatBytes(SizeBytes) : "Not scanned";
+        public string AllocatedFormatted => IsScanned && !IsParentLink ? FormatBytes(AllocatedBytes) : "";
+        public string FileCountFormatted => IsFile || !IsScanned || IsParentLink ? "" : FileCount.ToString("N0");
+        public string FolderCountFormatted => IsFile || !IsScanned || IsParentLink ? "" : FolderCount.ToString("N0");
+        public string PercentFormatted => IsParentLink ? "" : $"{PercentOfParent:F1}%";
 
         public static string FormatBytes(long bytes)
         {
