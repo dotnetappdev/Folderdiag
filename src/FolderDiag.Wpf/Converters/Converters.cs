@@ -76,7 +76,6 @@ namespace FolderDiag.Wpf.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is DateTime dt) return dt.ToString("yyyy-MM-dd HH:mm:ss");
-            if (value is DateTime? ndt && ndt.HasValue) return ndt.Value.ToString("yyyy-MM-dd HH:mm:ss");
             return "-";
         }
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();

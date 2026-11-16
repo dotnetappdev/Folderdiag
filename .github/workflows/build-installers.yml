@@ -1,0 +1,211 @@
+name: Build installers
+
+# Builds FolderDiag (WPF) and produces, per architecture:
+#   - FolderDiag-<ver>-<arch>-portable.exe   single-file self-contained exe
+#   - FolderDiag-Setup-<ver>-<arch>.exe       Inno Setup installer
+#   - FolderDiag-<ver>-<arch>.msix            MSIX package (signed)
+# Pushing a tag like v1.2.3 also publishes a GitHub Release with all files.
+#
+# MSIX signing (optional, recommended for real releases):
+#   secrets.MSIX_CERTIFICATE           base64-encoded .pfx
+#   secrets.MSIX_CERTIFICATE_PASSWORD  password for that .pfx
+#   vars.MSIX_PUBLISHER                must exactly match the cert subject, e.g. "CN=dotnetappdev"
+# Without these a self-signed certificate is generated and its .cer is shipped
+# alongside the .msix (import it into "Trusted People" to install).
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PROJECT: src/FolderDiag.Wpf/FolderDiag.Wpf.csproj
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64, arm64 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Compute version
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $v = $env:GITHUB_REF_NAME.TrimStart('v') -replace '-.*$',''
+          } else {
+            $v = "1.0.$env:GITHUB_RUN_NUMBER"
+          }
+          "version=$v"      >> $env:GITHUB_OUTPUT
+          "msixVersion=$v.0" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $v"
+
+      - name: Publish (self-contained folder)
+        shell: pwsh
+        run: >
+          dotnet publish $env:PROJECT -c Release -r win-${{ matrix.arch }}
+          --self-contained true
+          -p:Version=${{ steps.ver.outputs.version }}
+          -o artifacts/publish/${{ matrix.arch }}
+
+      - name: Publish (portable single-file exe)
+        shell: pwsh
+        run: |
+          dotnet publish $env:PROJECT -c Release -r win-${{ matrix.arch }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=${{ steps.ver.outputs.version }} `
+            -o artifacts/portable/${{ matrix.arch }}
+          New-Item -ItemType Directory -Force artifacts/out | Out-Null
+          Copy-Item artifacts/portable/${{ matrix.arch }}/FolderDiag.Wpf.exe `
+            "artifacts/out/FolderDiag-${{ steps.ver.outputs.version }}-${{ matrix.arch }}-portable.exe"
+
+      # ── Inno Setup ───────────────────────────────────────────────────────
+      - name: Ensure Inno Setup is installed
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install" }
+          "ISCC=$iscc" >> $env:GITHUB_ENV
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          & $env:ISCC `
+            "/DAppVersion=${{ steps.ver.outputs.version }}" `
+            "/DArch=${{ matrix.arch }}" `
+            "/DSourceDir=$env:GITHUB_WORKSPACE\artifacts\publish\${{ matrix.arch }}" `
+            "/DOutputDir=$env:GITHUB_WORKSPACE\artifacts\out" `
+            installer\FolderDiag.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
+
+      # ── MSIX ─────────────────────────────────────────────────────────────
+      - name: Locate Windows SDK tools
+        shell: pwsh
+        run: |
+          $kits = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
+          $bin = Get-ChildItem $kits -Directory |
+                   Where-Object { $_.Name -match '^\d+\.' -and (Test-Path "$($_.FullName)\x64\makeappx.exe") } |
+                   Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
+          if (-not $bin) { throw "Windows SDK makeappx.exe not found" }
+          "MAKEAPPX=$($bin.FullName)\x64\makeappx.exe" >> $env:GITHUB_ENV
+          "SIGNTOOL=$($bin.FullName)\x64\signtool.exe" >> $env:GITHUB_ENV
+
+      - name: Stage MSIX layout
+        shell: powershell   # Windows PowerShell for System.Drawing
+        env:
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+        run: |
+          $stage = "artifacts\msix\${{ matrix.arch }}"
+          New-Item -ItemType Directory -Force "$stage\Assets" | Out-Null
+          Copy-Item -Recurse -Force "artifacts\publish\${{ matrix.arch }}\*" $stage
+
+          $publisher = if ($env:MSIX_PUBLISHER) { $env:MSIX_PUBLISHER } else { 'CN=FolderDiag' }
+          "MSIX_PUBLISHER_RESOLVED=$publisher" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+          (Get-Content installer\msix\AppxManifest.xml -Raw) `
+            -replace '\$VERSION\$',   '${{ steps.ver.outputs.msixVersion }}' `
+            -replace '\$ARCH\$',      '${{ matrix.arch }}' `
+            -replace '\$PUBLISHER\$', [Security.SecurityElement]::Escape($publisher) |
+            Set-Content -Encoding UTF8 "$stage\AppxManifest.xml"
+
+          # Generate simple placeholder logos (replace with real art in installer\msix\Assets if present)
+          Add-Type -AssemblyName System.Drawing
+          function New-Logo($path, $w, $h) {
+            $bmp = New-Object System.Drawing.Bitmap $w, $h
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'
+            $g.Clear([System.Drawing.Color]::FromArgb(255, 0, 103, 192))
+            $size = [Math]::Max(8, [Math]::Min($w, $h) * 0.45)
+            $font = New-Object System.Drawing.Font 'Segoe UI', $size, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+            $fmt = New-Object System.Drawing.StringFormat
+            $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
+            $g.DrawString('FD', $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, 0, $w, $h), $fmt)
+            $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose(); $bmp.Dispose()
+          }
+          New-Logo "$stage\Assets\StoreLogo.png"         50  50
+          New-Logo "$stage\Assets\Square44x44Logo.png"   44  44
+          New-Logo "$stage\Assets\Square150x150Logo.png" 150 150
+          New-Logo "$stage\Assets\Wide310x150Logo.png"   310 150
+          if (Test-Path installer\msix\Assets) {
+            Copy-Item -Force installer\msix\Assets\* "$stage\Assets\"
+          }
+
+      - name: Pack MSIX
+        shell: pwsh
+        run: |
+          $out = "artifacts\out\FolderDiag-${{ steps.ver.outputs.version }}-${{ matrix.arch }}.msix"
+          & $env:MAKEAPPX pack /d "artifacts\msix\${{ matrix.arch }}" /p $out /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed ($LASTEXITCODE)" }
+          "MSIX_FILE=$out" >> $env:GITHUB_ENV
+
+      - name: Sign MSIX
+        shell: pwsh
+        env:
+          CERT_B64: ${{ secrets.MSIX_CERTIFICATE }}
+          CERT_PWD: ${{ secrets.MSIX_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP 'msix.pfx'
+          if ($env:CERT_B64) {
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CERT_B64))
+            $certPwd = $env:CERT_PWD
+            & $env:SIGNTOOL sign /fd SHA256 /f $pfx /p $certPwd /tr http://timestamp.digicert.com /td SHA256 $env:MSIX_FILE
+          } else {
+            Write-Host "No signing secret set - using a self-signed certificate for $env:MSIX_PUBLISHER_RESOLVED"
+            $cert = New-SelfSignedCertificate -Type Custom `
+              -Subject $env:MSIX_PUBLISHER_RESOLVED `
+              -KeyUsage DigitalSignature `
+              -FriendlyName 'FolderDiag test signing' `
+              -CertStoreLocation 'Cert:\CurrentUser\My' `
+              -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+            $certPwd = [guid]::NewGuid().ToString()
+            Export-PfxCertificate -Cert $cert -FilePath $pfx -Password (ConvertTo-SecureString $certPwd -AsPlainText -Force) | Out-Null
+            Export-Certificate -Cert $cert -FilePath "artifacts\out\FolderDiag-${{ matrix.arch }}-selfsigned.cer" | Out-Null
+            & $env:SIGNTOOL sign /fd SHA256 /f $pfx /p $certPwd $env:MSIX_FILE
+          }
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed ($LASTEXITCODE)" }
+          Remove-Item $pfx -Force
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FolderDiag-${{ steps.ver.outputs.version }}-${{ matrix.arch }}
+          path: artifacts/out/*
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

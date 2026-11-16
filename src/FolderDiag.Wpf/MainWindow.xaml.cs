@@ -106,8 +106,15 @@ namespace FolderDiag.Wpf
         {
             InitializeComponent();
 
+            // Store the database in %LocalAppData% so it is writable when installed
+            // under Program Files (Inno Setup) or inside an MSIX package.
+            var dataDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FolderDiag");
+            System.IO.Directory.CreateDirectory(dataDir);
+            var dbPath = System.IO.Path.Combine(dataDir, "folderdiag.db");
+
             _dbOpts = new DbContextOptionsBuilder<FolderDiagDbContext>()
-                .UseSqlite("Data Source=folderdiag.db")
+                .UseSqlite($"Data Source={dbPath}")
                 .Options;
 
             EnsureDb();

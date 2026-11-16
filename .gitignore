@@ -1,1 +1,8 @@
 FilesSource/
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+artifacts/
+publish/
+*.db
