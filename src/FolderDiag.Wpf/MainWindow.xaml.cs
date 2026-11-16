@@ -116,6 +116,9 @@ namespace FolderDiag.Wpf
         {
             InitializeComponent();
             ThemeManager.Register(this);
+            // Start with File Explorer's own View › Show settings
+            ChkShowHidden.IsChecked     = ExplorerSettings.ShowHidden;
+            ChkShowExtensions.IsChecked = ExplorerSettings.ShowExtensions;
             ThemeManager.ThemeChanged += OnThemeChanged;
             Closed += (_, _) =>
             {
@@ -1863,6 +1866,13 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
+            // Same as the Delete key: Windows' own Recycle Bin confirmation and progress
+            if (EntryOf(ActiveGrid?.SelectedItem) is Entry selected)
+            {
+                DeleteEntry(selected, permanently: Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+                return;
+            }
+
             // A file row in Folder Sizes: send the file to the Recycle Bin
             if (FoldersGrid.SelectedItem is FolderItem { IsFile: true } file)
             {
@@ -2059,24 +2069,6 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         }
 
         // ─── Open items: double-click / Enter, like File Explorer ─────────
-        /// <summary>
-        /// Double-click opens (folders navigate, files open in their app) — like File Explorer.
-        /// Detected from the second mouse-down (ClickCount == 2) in the tunnelling Preview event,
-        /// which always arrives with the real element under the mouse, before the DataGrid's own
-        /// cell/row handling can interfere.
-        /// </summary>
-        private void Grid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ClickCount != 2 || sender is not DataGrid grid) return;
-            object? item = RowItemFrom(grid, e.OriginalSource as DependencyObject)
-                        ?? RowItemFrom(grid, grid.InputHitTest(e.GetPosition(grid)) as DependencyObject);
-            switch (item)
-            {
-                case FolderItem f:    e.Handled = true; OpenFolderItem(f);   break;
-                case BrowserEntry be: e.Handled = true; OpenBrowserEntry(be); break;
-            }
-        }
-
         /// <summary>The data item of the row containing <paramref name="start"/>; null for headers, scrollbars, empty space.</summary>
         private static object? RowItemFrom(DataGrid grid, DependencyObject? start)
         {
@@ -2094,22 +2086,6 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void CtxFolderOpen_Click(object sender, RoutedEventArgs e)
         {
             if (FoldersGrid.SelectedItem is FolderItem f) OpenFolderItem(f);
-        }
-
-        /// <summary>Enter opens the selected item; Backspace goes up a level (both like Explorer).</summary>
-        private void Grid_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (sender is not DataGrid grid) return;
-            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
-            {
-                if (grid.SelectedItem is FolderItem f)        { OpenFolderItem(f); e.Handled = true; }
-                else if (grid.SelectedItem is BrowserEntry b) { OpenBrowserEntry(b); e.Handled = true; }
-            }
-            else if (e.Key == Key.Back && Keyboard.Modifiers == ModifierKeys.None)
-            {
-                BtnNavUp_Click(sender, e);
-                e.Handled = true;
-            }
         }
 
         /// <summary>Right-click selects the row under the mouse first, so the context menu acts on it.</summary>
@@ -2293,15 +2269,9 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void CtxDelete_Click(object sender, RoutedEventArgs e)      => BtnDelete_Click(sender, e);
         private void CtxProperties_Click(object sender, RoutedEventArgs e)
         {
-            string? path = GetSelectedFolderPath();
-            if (path == null) return;
-            try
-            {
-                var psi = new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{path}\"")
-                    { UseShellExecute = true };
-                System.Diagnostics.Process.Start(psi);
-            }
-            catch { }
+            if (EntryOf(FoldersGrid.SelectedItem) is Entry f && MainTabCtrl.SelectedIndex == 0) ShowProperties(f.Path);
+            else if (EntryOf(FileBrowserGrid.SelectedItem) is Entry b) ShowProperties(b.Path);
+            else if (GetSelectedFolderPath() is string p) ShowProperties(p);
         }
 
         // Context menu — file browser

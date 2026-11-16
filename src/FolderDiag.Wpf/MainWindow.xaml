@@ -14,6 +14,7 @@
         FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource Fs13}"
         Foreground="{DynamicResource Win11TextBrush}"
         PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewMouseDown="Window_PreviewMouseDown"
         PreviewMouseWheel="Window_PreviewMouseWheel">
 
     <Window.Resources>
@@ -794,7 +795,10 @@
                                       Grid.Row="1"
                                       SelectedCellsChanged="FoldersGrid_SelectionChanged"
                                       PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
+                                      PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
+                                      MouseMove="Grid_MouseMove"
                                       PreviewKeyDown="Grid_PreviewKeyDown"
+                                      PreviewTextInput="Grid_PreviewTextInput"
                                       PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="Name" Width="220" SortMemberPath="Name">
@@ -896,7 +900,10 @@
                                       Grid.Row="1"
                                       SelectedCellsChanged="FileBrowserGrid_SelectionChanged"
                                       PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
+                                      PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
+                                      MouseMove="Grid_MouseMove"
                                       PreviewKeyDown="Grid_PreviewKeyDown"
+                                      PreviewTextInput="Grid_PreviewTextInput"
                                       PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="Name" Width="260" SortMemberPath="Name">
