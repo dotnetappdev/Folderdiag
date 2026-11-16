@@ -50,15 +50,23 @@ namespace FolderDiag.Wpf.Theming
             _settings = settings;
             var res = Application.Current.Resources;
 
-            IsHighContrast = settings.FollowHighContrast && WindowsTheme.HighContrast;
+            bool windowsContrast = settings.FollowHighContrast && WindowsTheme.HighContrast;
+            bool appContrast = settings.Theme is ThemeChoice.HighContrastDark or ThemeChoice.HighContrastLight;
+            IsHighContrast = windowsContrast || appContrast;
             IsDark = settings.Theme switch
             {
-                ThemeChoice.Light => false,
-                ThemeChoice.Dark  => true,
-                _                 => !WindowsTheme.AppsUseLightTheme,
+                ThemeChoice.Light             => false,
+                ThemeChoice.Dark              => true,
+                ThemeChoice.HighContrastDark  => true,
+                ThemeChoice.HighContrastLight => false,
+                _                             => !WindowsTheme.AppsUseLightTheme,
             };
 
-            var palette = IsHighContrast ? HighContrastPalette() : IsDark ? DarkPalette(settings) : LightPalette(settings);
+            // Windows' own contrast theme wins (when followed), then the app's contrast themes
+            var palette = windowsContrast ? HighContrastPalette()
+                        : appContrast     ? AppContrastPalette(dark: IsDark)
+                        : IsDark          ? DarkPalette(settings)
+                        :                   LightPalette(settings);
             foreach (var (key, color) in palette)
             {
                 var brush = new SolidColorBrush(color);
@@ -175,6 +183,8 @@ namespace FolderDiag.Wpf.Theming
                 ("Win11ChartBgBrush",          panel),
             };
             list.AddRange(AccentKeys(a, h, p, panel, text, false));
+            // Ribbon icons: Fluent "dark" shades read well on light backgrounds
+            list.AddRange(IconKeys(0x0067C0, 0x0F7B0F, 0xC42B1C, 0xCA5010, 0x9D5D00, 0x8764B8, 0x038387));
             return list;
         }
 
@@ -203,6 +213,59 @@ namespace FolderDiag.Wpf.Theming
                 ("Win11ChartBgBrush",          panel),
             };
             list.AddRange(AccentKeys(a, h, p, panel, text, true));
+            // Ribbon icons: lighter shades for dark backgrounds
+            list.AddRange(IconKeys(0x60CDFF, 0x6CCB5F, 0xFF99A4, 0xFFA66B, 0xFCD34D, 0xC6A6FF, 0x4DD7D0));
+            return list;
+        }
+
+        private static IEnumerable<(string, Color)> IconKeys(uint blue, uint green, uint red, uint orange, uint gold, uint purple, uint teal)
+        {
+            yield return ("IconBlue", C(blue));     yield return ("IconGreen", C(green));
+            yield return ("IconRed", C(red));       yield return ("IconOrange", C(orange));
+            yield return ("IconGold", C(gold));     yield return ("IconPurple", C(purple));
+            yield return ("IconTeal", C(teal));
+        }
+
+        /// <summary>Contrast themes draw every icon in one colour (usually the text colour).</summary>
+        private static IEnumerable<(string, Color)> MonoIcons(Color c)
+            => new[] { "IconBlue", "IconGreen", "IconRed", "IconOrange", "IconGold", "IconPurple", "IconTeal" }.Select(k => (k, c));
+
+        /// <summary>
+        /// FolderDiag's own contrast themes (Settings › Theme), for when Windows isn't in a
+        /// contrast theme. Text/background contrast is 21:1; every other pair is at least 7:1 (WCAG AAA).
+        /// </summary>
+        private static List<(string, Color)> AppContrastPalette(bool dark)
+        {
+            Color bg, text, line, hint, hover, pressed, accent, accentText, select, selectText;
+            if (dark)
+            {   // Black background, white text, yellow accents, cyan selection
+                bg = C(0x000000); text = C(0xFFFFFF); line = C(0xFFFFFF); hint = C(0xC8C8C8);
+                hover = C(0x262626); pressed = C(0x404040);
+                accent = C(0xFFFF00); accentText = C(0x000000);
+                select = C(0x1AEBFF); selectText = C(0x000000);
+            }
+            else
+            {   // White background, black text, dark purple accents and selection
+                bg = C(0xFFFFFF); text = C(0x000000); line = C(0x000000); hint = C(0x3D3D3D);
+                hover = C(0xE6E6E6); pressed = C(0xCCCCCC);
+                accent = C(0x37006E); accentText = C(0xFFFFFF);
+                select = C(0x37006E); selectText = C(0xFFFFFF);
+            }
+            Accent = accent;
+            var list = new List<(string, Color)>
+            {
+                ("Win11BgBrush", bg), ("Win11PanelBrush", bg), ("Win11SidebarBrush", bg),
+                ("Win11RibbonBrush", bg), ("Win11HeaderBgBrush", bg), ("Win11StatusBarBrush", bg),
+                ("Win11ChartBgBrush", bg), ("Win11AltRowBrush", bg),
+                ("Win11BorderBrush", line), ("Win11GridLineBrush", hint),
+                ("Win11InputHoverBorderBrush", accent), ("Win11ScrollThumbBrush", text),
+                ("Win11TextBrush", text), ("Win11SubTextBrush", text), ("Win11PlaceholderBrush", hint),
+                ("Win11HoverBrush", hover), ("Win11PressedBrush", pressed),
+                ("Win11AccentBrush", accent), ("Win11AccentHoverBrush", accent), ("Win11AccentPressBrush", accent),
+                ("Win11AccentTextBrush", accentText),
+                ("Win11SelectBrush", select), ("Win11SelectTextBrush", selectText),
+            };
+            list.AddRange(MonoIcons(text));
             return list;
         }
 
@@ -225,7 +288,7 @@ namespace FolderDiag.Wpf.Theming
                 ("Win11AccentBrush", hi), ("Win11AccentHoverBrush", hi), ("Win11AccentPressBrush", hi),
                 ("Win11AccentTextBrush", hiText),
                 ("Win11SelectBrush", hi), ("Win11SelectTextBrush", hiText),
-            };
+            }.Concat(MonoIcons(text)).ToList();
         }
 
         // ── Bar colours (disk space + folder %) ───────────────────────

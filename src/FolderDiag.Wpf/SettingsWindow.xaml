@@ -81,8 +81,20 @@
                             </RadioButton>
                             <RadioButton x:Name="RbThemeLight" GroupName="Theme" Content="Light" Checked="AnyChanged"/>
                             <RadioButton x:Name="RbThemeDark"  GroupName="Theme" Content="Dark"  Checked="AnyChanged"/>
+                            <RadioButton x:Name="RbThemeHcDark" GroupName="Theme" Checked="AnyChanged">
+                                <TextBlock>
+                                    <Run Text="High contrast (dark)"/>
+                                    <Run Text="  — black, white and yellow" Foreground="{DynamicResource Win11SubTextBrush}"/>
+                                </TextBlock>
+                            </RadioButton>
+                            <RadioButton x:Name="RbThemeHcLight" GroupName="Theme" Checked="AnyChanged">
+                                <TextBlock>
+                                    <Run Text="High contrast (light)"/>
+                                    <Run Text="  — white, black and purple" Foreground="{DynamicResource Win11SubTextBrush}"/>
+                                </TextBlock>
+                            </RadioButton>
                             <TextBlock Style="{StaticResource Hint}"
-                                       Text="'Use Windows setting' follows Settings › Personalisation › Colours › Choose your mode, and switches automatically when you change it."/>
+                                       Text="'Use Windows setting' follows Settings › Personalisation › Colours › Choose your mode, and switches automatically when you change it. The high contrast themes use maximum-contrast colours (WCAG AAA) for low vision; a Windows contrast theme, if on, still takes priority when 'Follow Windows contrast themes' is ticked."/>
                         </StackPanel>
                     </Border>
 

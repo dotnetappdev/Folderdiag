@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace FolderDiag.Wpf.Settings
 {
-    public enum ThemeChoice { System, Light, Dark }
+    public enum ThemeChoice { System, Light, Dark, HighContrastDark, HighContrastLight }
 
     /// <summary>
     /// User preferences. Defaults follow Windows 11 (theme, accent, text size,

@@ -34,6 +34,18 @@
     <SolidColorBrush x:Key="Win11ChartBgBrush"          Color="#FFFFFF" />
     <SolidColorBrush x:Key="TransparentBrush"           Color="Transparent" />
 
+    <!-- Ribbon icon colours (Light defaults; ThemeManager swaps Dark / contrast shades) -->
+    <SolidColorBrush x:Key="IconBlue"   Color="#0067C0" />
+    <SolidColorBrush x:Key="IconGreen"  Color="#0F7B0F" />
+    <SolidColorBrush x:Key="IconRed"    Color="#C42B1C" />
+    <SolidColorBrush x:Key="IconOrange" Color="#CA5010" />
+    <SolidColorBrush x:Key="IconGold"   Color="#9D5D00" />
+    <SolidColorBrush x:Key="IconPurple" Color="#8764B8" />
+    <SolidColorBrush x:Key="IconTeal"   Color="#038387" />
+
+    <!-- Windows 11 icon font, falling back to the Windows 10 one -->
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
     <!-- Fonts (scaled by the Font size setting and Windows "Text size") -->
     <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
     <sys:Double x:Key="Fs10">10</sys:Double>
@@ -198,6 +210,14 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- Ribbon command icon -->
+    <Style x:Key="RibbonIcon" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs20}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,2,0,4" />
     </Style>
 
     <!-- Default Button fallback -->

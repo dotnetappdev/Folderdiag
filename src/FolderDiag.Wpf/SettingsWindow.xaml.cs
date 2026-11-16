@@ -57,6 +57,8 @@ namespace FolderDiag.Wpf
             RbThemeSystem.IsChecked = s.Theme == ThemeChoice.System;
             RbThemeLight.IsChecked  = s.Theme == ThemeChoice.Light;
             RbThemeDark.IsChecked   = s.Theme == ThemeChoice.Dark;
+            RbThemeHcDark.IsChecked  = s.Theme == ThemeChoice.HighContrastDark;
+            RbThemeHcLight.IsChecked = s.Theme == ThemeChoice.HighContrastLight;
             ChkWindowsAccent.IsChecked = s.UseWindowsAccent;
             AccentPicker.SelectedColor = s.AccentColor;
             ChkHighContrast.IsChecked  = s.FollowHighContrast;
@@ -94,8 +96,10 @@ namespace FolderDiag.Wpf
         private void ReadIntoSettings()
         {
             var s = _working;
-            s.Theme = RbThemeLight.IsChecked == true ? ThemeChoice.Light
-                    : RbThemeDark.IsChecked == true  ? ThemeChoice.Dark
+            s.Theme = RbThemeLight.IsChecked == true   ? ThemeChoice.Light
+                    : RbThemeDark.IsChecked == true    ? ThemeChoice.Dark
+                    : RbThemeHcDark.IsChecked == true  ? ThemeChoice.HighContrastDark
+                    : RbThemeHcLight.IsChecked == true ? ThemeChoice.HighContrastLight
                     : ThemeChoice.System;
             s.UseWindowsAccent   = ChkWindowsAccent.IsChecked == true;
             s.AccentColor        = AccentPicker.SelectedColor;

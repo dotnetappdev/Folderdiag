@@ -39,7 +39,7 @@
                 <!-- App icon + title -->
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="10,0,0,0">
-                    <TextBlock Text="📁" FontSize="20" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="&#xE8B7;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGold}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="FolderDiag" FontWeight="SemiBold"
                                Foreground="{DynamicResource Win11TextBrush}"
                                VerticalAlignment="Center" FontSize="{DynamicResource Fs14}"/>
@@ -83,7 +83,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Scan selected folder for sizes">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🔍" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE721;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="Scan" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -92,7 +92,7 @@
                                                     IsEnabled="False"
                                                     ToolTip="Stop current scan">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="⏹" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE71A;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconRed}"/>
                                                     <TextBlock Text="Stop" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -100,7 +100,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Refresh current view">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🔄" FontSize="22" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE72C;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGreen}"/>
                                                     <TextBlock Text="Refresh" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -118,7 +118,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Copy selected item">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📋" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8C8;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="Copy" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -126,7 +126,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Move selected item">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="✂" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8DE;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconPurple}"/>
                                                     <TextBlock Text="Move" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -134,7 +134,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Delete selected item">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE74D;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconRed}"/>
                                                     <TextBlock Text="Delete" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -142,7 +142,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Compress to ZIP">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🗜" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE7B8;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGold}"/>
                                                     <TextBlock Text="Zip" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -160,7 +160,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Export to CSV">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE9F9;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGreen}"/>
                                                     <TextBlock Text="CSV" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -168,7 +168,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Export to XML">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE943;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconOrange}"/>
                                                     <TextBlock Text="XML" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -176,7 +176,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Export to HTML Report">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🌐" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE774;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="HTML" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -193,7 +193,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Save a snapshot for trend comparison">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📷" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE722;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconPurple}"/>
                                                     <TextBlock Text="Snapshot" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -201,7 +201,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Compare two snapshots">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="⚖" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8AB;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
                                                     <TextBlock Text="Compare" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -209,7 +209,7 @@
                                                     Style="{StaticResource RibbonButtonStyle}"
                                                     ToolTip="Schedule automatic scans">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🕐" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE823;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconOrange}"/>
                                                     <TextBlock Text="Schedule" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -237,21 +237,21 @@
                                             <Button x:Name="BtnViewDetails" Click="BtnViewDetails_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Details view">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="☰" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8FD;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
                                                     <TextBlock Text="Details" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnViewList" Click="BtnViewList_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="List view">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="▤" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xEA37;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
                                                     <TextBlock Text="List" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnViewTiles" Click="BtnViewTiles_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Tiles view">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="⊞" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xECA5;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
                                                     <TextBlock Text="Tiles" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -284,21 +284,21 @@
                                             <Button x:Name="BtnChartBar" Click="BtnChartBar_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Bar chart">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE9D2;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="Bar" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnChartPie" Click="BtnChartPie_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Pie chart">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🥧" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xEB05;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconPurple}"/>
                                                     <TextBlock Text="Pie" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnChartTreemap" Click="BtnChartTreemap_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Treemap chart">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="▦" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE80A;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGreen}"/>
                                                     <TextBlock Text="Treemap" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -323,25 +323,25 @@
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <Button Click="BtnReportLargest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show largest files">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8CB;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="Largest" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportOldest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show oldest files">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🕰" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE81C;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconGold}"/>
                                                     <TextBlock Text="Oldest" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportTemp_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show temporary files">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xEA99;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconOrange}"/>
                                                     <TextBlock Text="Temp Files" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportDuplicates_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Find duplicate files">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="👥" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8C8;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconPurple}"/>
                                                     <TextBlock Text="Duplicates" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -354,19 +354,19 @@
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <Button Click="BtnClassifyType_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by file type">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="🗂" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE8EC;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
                                                     <TextBlock Text="By Type" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnClassifyAge_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by age">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="📅" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE787;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconRed}"/>
                                                     <TextBlock Text="By Age" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnClassifyOwner_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by owner">
                                                 <StackPanel HorizontalAlignment="Center">
-                                                    <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE77B;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconBlue}"/>
                                                     <TextBlock Text="By Owner" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
@@ -398,19 +398,19 @@
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             IsEnabled="False" ToolTip="Back (Alt+Left)">
-                        <TextBlock Text="←" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="{DynamicResource Fs14}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                     <Button x:Name="BtnNavForward" Click="BtnNavForward_Click"
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             IsEnabled="False" ToolTip="Forward (Alt+Right)">
-                        <TextBlock Text="→" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="{DynamicResource Fs14}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                     <Button x:Name="BtnNavUp" Click="BtnNavUp_Click"
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             ToolTip="Up one level (Alt+Up)">
-                        <TextBlock Text="↑" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE74A;" FontFamily="{StaticResource IconFont}" FontSize="{DynamicResource Fs14}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                 </StackPanel>
 
@@ -437,7 +437,7 @@
                                    Foreground="{DynamicResource Win11PlaceholderBrush}" Margin="10,0,0,0"
                                    VerticalAlignment="Center"
                                    Visibility="Visible"/>
-                        <TextBlock Grid.Column="1" Text="🔍" FontSize="{DynamicResource Fs14}"
+                        <TextBlock Grid.Column="1" Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="{DynamicResource Fs13}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Win11PlaceholderBrush}"/>
                     </Grid>
