@@ -593,7 +593,7 @@
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="8,8,8,4" />
-        <!-- WPF has no TextTransform; write section header text in uppercase instead -->
+        <!-- WPF TextBlock cannot auto-uppercase; write section header text in capitals -->
     </Style>
 
     <Style x:Key="RibbonGroupLabelStyle" TargetType="TextBlock">
