@@ -19,6 +19,8 @@ using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using FolderDiag.Core.Models;
+using FolderDiag.Core.Scanning;
+using FolderDiag.Wpf.Scanning;
 using FolderDiag.Wpf.Settings;
 using FolderDiag.Wpf.Theming;
 using FolderDiag.Data;
@@ -142,7 +144,7 @@ namespace FolderDiag.Wpf
         private void EnsureDb()
         {
             using var db = new FolderDiagDbContext(_dbOpts);
-            db.Database.EnsureCreated();
+            ScanStore.Initialize(db); // creates tables + indexes used by folder lookups
         }
 
         // ─── Bind grids ───────────────────────────────────────────────────
@@ -735,12 +737,21 @@ namespace FolderDiag.Wpf
             ScanProgress.IsIndeterminate = true;
             StatusTotal.Text   = $"Scanning {scanPath}…";
 
-            var task = Task.Run(() => PerformScan(scanPath, cts.Token));
+            // Progress<T> marshals back to the UI thread; the scanner throttles to ~5 updates/sec
+            var progress = new Progress<ScanProgress>(p =>
+            {
+                if (!ReferenceEquals(_scanCts, cts)) return;
+                double secs = Math.Max(0.1, p.Elapsed.TotalSeconds);
+                StatusTotal.Text = $"Scanning… {p.Files:N0} files · {FolderItem.FormatBytes(p.Bytes)} · " +
+                                   $"{p.Files / secs:N0} files/s — {System.IO.Path.GetFileName(p.CurrentPath.TrimEnd('\\'))}";
+            });
+            var started = DateTime.Now;
+            var task = Task.Run(() => PerformScan(scanPath, progress, cts.Token));
             _scanTask = task;
             try
             {
                 await task;
-                StatusTotal.Text = "Scan complete.";
+                StatusTotal.Text = $"Scan complete in {(DateTime.Now - started).TotalSeconds:N1}s.";
             }
             catch (OperationCanceledException)
             {
@@ -766,110 +777,19 @@ namespace FolderDiag.Wpf
             }
         }
 
-        private void PerformScan(string rootPath, CancellationToken ct)
+        // Fast scanner (FolderDiag.Core.Scanning) + streaming bulk writer (FolderDiag.Data.ScanStore).
+        // Runs in one transaction: stopping a scan keeps the previous results.
+        private void PerformScan(string rootPath, IProgress<ScanProgress> progress, CancellationToken ct)
         {
-            using var db = new FolderDiagDbContext(_dbOpts);
-
-            // Remove previous scan data for this root
-            string prefix = rootPath.EndsWith(System.IO.Path.DirectorySeparatorChar)
-                ? rootPath : rootPath + System.IO.Path.DirectorySeparatorChar;
-            var old = db.FolderItems.Where(f => f.Path == rootPath || f.Path.StartsWith(prefix)).ToList();
-            db.FolderItems.RemoveRange(old);
-            var oldFiles = db.FileItems.Where(f => f.FolderPath == rootPath || f.FolderPath.StartsWith(prefix)).ToList();
-            db.FileItems.RemoveRange(oldFiles);
-            db.SaveChanges();
-
-            ScanDirectory(db, rootPath, null, 0, ct);
-            db.SaveChanges();
+            var settings = SettingsService.Current;
+            var options = new ScanOptions
+            {
+                MaxParallelism = settings.ParallelScanning ? Math.Clamp(Environment.ProcessorCount, 2, 8) : 1,
+                OwnerResolver  = settings.ReadOwners ? OwnerResolver.Shared.Resolve : null,
+                FileOwners     = settings.ReadOwners,
+            };
+            ScanStore.ScanAndStore(_dbOpts, rootPath, options, progress, ct);
         }
-
-        private (long size, long alloc, int files, int folders) ScanDirectory(
-            FolderDiagDbContext db, string path, string? parentPath, int depth, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            long totalSize = 0, totalAlloc = 0;
-            int  totalFiles = 0, totalFolders = 0;
-
-            // Scan files in this directory
-            try
-            {
-                foreach (var file in Directory.GetFiles(path))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    var fi = new FileInfo(file);
-                    long alloc = AllocatedSize(fi.Length);
-
-                    totalSize  += fi.Length;
-                    totalAlloc += alloc;
-                    totalFiles++;
-
-                    bool isTemp = fi.Extension.ToLower() is ".tmp" or ".temp" or ".bak" or ".log" or ".dmp";
-
-                    db.FileItems.Add(new FileItem
-                    {
-                        Name        = fi.Name,
-                        Path        = fi.FullName,
-                        FolderPath  = path,
-                        Extension   = fi.Extension.ToLower(),
-                        SizeBytes   = fi.Length,
-                        AllocatedBytes = alloc,
-                        Modified    = fi.LastWriteTime,
-                        Created     = fi.CreationTime,
-                        Accessed    = fi.LastAccessTime,
-                        Owner       = TryGetOwner(fi.FullName),
-                        IsReadOnly  = fi.IsReadOnly,
-                        IsHidden    = (fi.Attributes & FileAttributes.Hidden) != 0,
-                        IsSystem    = (fi.Attributes & FileAttributes.System) != 0,
-                        IsTemp      = isTemp,
-                        ScannedAt   = DateTime.Now
-                    });
-                }
-            }
-            catch { }
-
-            // Recurse subdirectories
-            try
-            {
-                foreach (var dir in Directory.GetDirectories(path))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    totalFolders++;
-                    var (childSize, childAlloc, childFiles, childFolders) =
-                        ScanDirectory(db, dir, path, depth + 1, ct);
-                    totalSize    += childSize;
-                    totalAlloc   += childAlloc;
-                    totalFiles   += childFiles;
-                    totalFolders += childFolders;
-                }
-            }
-            catch { }
-
-            // Store this folder
-            db.FolderItems.Add(new FolderItem
-            {
-                Path        = path,
-                Name        = depth == 0 ? path : System.IO.Path.GetFileName(path),
-                ParentPath  = parentPath,
-                SizeBytes   = totalSize,
-                AllocatedBytes = totalAlloc,
-                FileCount   = totalFiles,
-                FolderCount = totalFolders,
-                LastModified = Directory.Exists(path) ? new DirectoryInfo(path).LastWriteTime : null,
-                Created     = Directory.Exists(path) ? new DirectoryInfo(path).CreationTime   : null,
-                Owner       = TryGetOwner(path),
-                Depth       = depth,
-                ScannedAt   = DateTime.Now
-            });
-
-            // Update status on UI thread
-            Dispatcher.InvokeAsync(() => StatusTotal.Text = $"Scanning: {System.IO.Path.GetFileName(path)}…  ({totalFiles:N0} files)");
-
-            return (totalSize, totalAlloc, totalFiles, totalFolders);
-        }
-
-        private static long AllocatedSize(long bytes, long clusterSize = 4096)
-            => ((bytes + clusterSize - 1) / clusterSize) * clusterSize;
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
@@ -1532,19 +1452,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         // ─── Helper: get file/folder owner ───────────────────────────────
         private static string? TryGetOwner(string path)
-        {
-            try
-            {
-                if (Directory.Exists(path))
-                {
-                    var sec = new DirectoryInfo(path).GetAccessControl();
-                    return sec.GetOwner(typeof(NTAccount))?.ToString();
-                }
-                var fs = new FileInfo(path).GetAccessControl();
-                return fs.GetOwner(typeof(NTAccount))?.ToString();
-            }
-            catch { return null; }
-        }
+            => OwnerResolver.Shared.Resolve(path, Directory.Exists(path));
 
         // ─── Event Handlers ───────────────────────────────────────────────
 

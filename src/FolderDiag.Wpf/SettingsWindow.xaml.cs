@@ -83,6 +83,8 @@ namespace FolderDiag.Wpf
             SldFolderHigh.Value = s.FolderHighPercent;
 
             ChkAutoScan.IsChecked = s.AutoScanOnNavigate;
+            ChkParallelScan.IsChecked = s.ParallelScanning;
+            ChkReadOwners.IsChecked = s.ReadOwners;
 
             _loading = false;
             UpdateDerivedUi();
@@ -119,6 +121,8 @@ namespace FolderDiag.Wpf
             s.FolderHighPercent   = (int)SldFolderHigh.Value;
 
             s.AutoScanOnNavigate = ChkAutoScan.IsChecked == true;
+            s.ParallelScanning   = ChkParallelScan.IsChecked == true;
+            s.ReadOwners         = ChkReadOwners.IsChecked == true;
         }
 
         private void AnyChanged(object? sender, EventArgs e)

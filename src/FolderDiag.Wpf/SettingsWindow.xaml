@@ -300,6 +300,14 @@
                                       Checked="AnyChanged" Unchecked="AnyChanged"/>
                             <TextBlock Style="{StaticResource Hint}"
                                        Text="When off, unscanned folders list their subfolders and you press Scan to calculate sizes."/>
+                            <CheckBox x:Name="ChkParallelScan" Content="Fast parallel scanning"
+                                      Checked="AnyChanged" Unchecked="AnyChanged" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="Reads several folders at once. Best for SSD/NVMe drives; turn off for old spinning hard disks or slow network shares."/>
+                            <CheckBox x:Name="ChkReadOwners" Content="Read file and folder owners"
+                                      Checked="AnyChanged" Unchecked="AnyChanged" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="Needed for the 'Files by Owner' report and owner search. Turning it off makes scans faster."/>
                         </StackPanel>
                     </Border>
 
