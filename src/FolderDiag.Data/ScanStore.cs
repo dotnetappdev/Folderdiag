@@ -34,6 +34,30 @@ namespace FolderDiag.Data
                 $"CREATE INDEX IF NOT EXISTS IX_{files}_SizeBytes ON \"{files}\" (\"SizeBytes\" DESC);",
             };
             foreach (string sql in ddl) db.Database.ExecuteSqlRaw(sql);
+
+            RemoveDuplicateRows(db, folders, files);
+        }
+
+        /// <summary>
+        /// Clean up results left by older versions: keep only the newest row per path
+        /// (case-insensitive), and drop drive-relative paths such as "C:Users" that an old bug
+        /// recorded instead of "C:\\Users". Cheap when there's nothing to remove.
+        /// </summary>
+        private static void RemoveDuplicateRows(FolderDiagDbContext db, string folders, string files)
+        {
+            foreach (var (table, col) in new[] { (folders, "Path"), (files, "Path") })
+            {
+                string dedupe =
+                    $"DELETE FROM \"{table}\" WHERE \"Id\" IN (" +
+                    $"  SELECT \"Id\" FROM (SELECT \"Id\", ROW_NUMBER() OVER (" +
+                    $"    PARTITION BY \"{col}\" COLLATE NOCASE ORDER BY \"ScannedAt\" DESC, \"Id\" DESC) AS rn" +
+                    $"  FROM \"{table}\") WHERE rn > 1);";
+                // "X:" followed by anything other than a backslash = drive-relative (wrong) path
+                string driveRelative =
+                    $"DELETE FROM \"{table}\" WHERE \"{col}\" GLOB '[A-Za-z]:*' AND \"{col}\" NOT GLOB '[A-Za-z]:\\*';";
+                db.Database.ExecuteSqlRaw(dedupe);
+                db.Database.ExecuteSqlRaw(driveRelative);
+            }
         }
 
         public static ScanTotals ScanAndStore(

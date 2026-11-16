@@ -520,7 +520,9 @@ namespace FolderDiag.Wpf
             }
 
             // User-pinned folders
-            foreach (var p in _pinnedPaths.Where(Directory.Exists))
+            var standard = new HashSet<string>(QuickAccessTree.Items.OfType<TreeViewItem>()
+                .Select(t => t.Tag as string).OfType<string>(), StringComparer.OrdinalIgnoreCase);
+            foreach (var p in _pinnedPaths.Where(Directory.Exists).Where(p => !standard.Contains(p.TrimEnd('\\'))))
             {
                 var tvi = new TreeViewItem
                 {
@@ -743,54 +745,102 @@ namespace FolderDiag.Wpf
         }
 
         // ─── Load Folder Sizes ─────────────────────────────────────────────
+        /// <summary>
+        /// Lists everything in a folder, like File Explorer: every sub-folder (with its size from
+        /// the last scan, or "Not scanned") and every file (sizes read straight from disk).
+        /// The disk decides what is listed, so deleted folders disappear and new ones appear even
+        /// before a rescan; the scan database only supplies folder sizes.
+        /// </summary>
         private void LoadFolderSizes(string path)
         {
             _folderItems.Clear();
             if (string.IsNullOrEmpty(path)) return;
-
             path = NormalizePath(path);
 
-            using var db = new FolderDiagDbContext(_dbOpts);
-
-            // The folder's own row exists once it (or any ancestor) has been scanned
-            var self = db.FolderItems
-                .Where(f => EF.Functions.Collate(f.Path, "NOCASE") == path)
-                .OrderByDescending(f => f.ScannedAt)
-                .FirstOrDefault();
-
-            var rows = db.FolderItems
-                .Where(f => EF.Functions.Collate(f.ParentPath, "NOCASE") == path)
-                .OrderByDescending(f => f.SizeBytes)
-                .ToList();
-
-            if (self == null && rows.Count == 0)
+            // Scanned sizes for this folder and its direct sub-folders
+            FolderItem? self;
+            Dictionary<string, FolderItem> scanned;
+            using (var db = new FolderDiagDbContext(_dbOpts))
             {
-                // Never scanned: list subfolders so the view isn't blank, then scan automatically.
-                try
-                {
-                    foreach (var dir in new DirectoryInfo(path).EnumerateDirectories("*", new EnumerationOptions { IgnoreInaccessible = true }))
-                        _folderItems.Add(new FolderItem { Path = dir.FullName, Name = ShellIcons.FolderDisplayName(dir), ParentPath = path });
-                }
-                catch { }
+                self = db.FolderItems.AsNoTracking()
+                    .Where(f => EF.Functions.Collate(f.Path, "NOCASE") == path)
+                    .OrderByDescending(f => f.ScannedAt)
+                    .FirstOrDefault();
+                scanned = db.FolderItems.AsNoTracking()
+                    .Where(f => EF.Functions.Collate(f.ParentPath, "NOCASE") == path)
+                    .AsEnumerable()
+                    .GroupBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(f => f.ScannedAt).First(), StringComparer.OrdinalIgnoreCase);
+            }
 
+            var items = new List<FolderItem>();
+            int unscanned = 0;
+            try
+            {
+                var opts = new EnumerationOptions { IgnoreInaccessible = true, AttributesToSkip = 0 };
+                var dir = new DirectoryInfo(path);
+
+                foreach (var d in dir.EnumerateDirectories("*", opts))
+                {
+                    if (scanned.TryGetValue(d.FullName, out var row))
+                    {
+                        row.Name = ShellIcons.FolderDisplayName(d);   // Explorer's name
+                        items.Add(row);
+                    }
+                    else
+                    {
+                        unscanned++;
+                        items.Add(new FolderItem
+                        {
+                            Path = d.FullName, Name = ShellIcons.FolderDisplayName(d), ParentPath = path,
+                            IsScanned = false, LastModified = d.LastWriteTime, Created = d.CreationTime,
+                        });
+                    }
+                }
+
+                foreach (var f in dir.EnumerateFiles("*", opts))
+                {
+                    items.Add(new FolderItem
+                    {
+                        IsFile = true, Path = f.FullName, Name = f.Name, ParentPath = path,
+                        SizeBytes = f.Length, AllocatedBytes = (f.Length + 4095) / 4096 * 4096,
+                        LastModified = f.LastWriteTime, Created = f.CreationTime,
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusTotal.Text = $"Can't read {path}: {ex.Message}";
+            }
+
+            // Percentages of everything listed, so they always add up to 100%
+            long total = items.Where(i => i.IsScanned).Sum(i => i.SizeBytes);
+            foreach (var i in items)
+                i.PercentOfParent = total > 0 && i.IsScanned ? 100.0 * i.SizeBytes / total : 0;
+
+            // Biggest first; not-yet-scanned folders after scanned ones, then by name
+            foreach (var i in items.OrderByDescending(i => i.IsScanned)
+                                   .ThenByDescending(i => i.SizeBytes)
+                                   .ThenBy(i => i.Name, ShellIcons.LogicalComparer))
+                _folderItems.Add(i);
+
+            // Folder never scanned as a whole: scan it once automatically (if enabled)
+            if (self == null && unscanned > 0)
+            {
                 if (SettingsService.Current.AutoScanOnNavigate && _autoScanAttempted.Add(path))
                     _ = StartScanAsync(path);
                 else if (_scanTask == null)
-                    StatusTotal.Text = "Not scanned yet — click Scan to calculate folder sizes.";
-
-                DrawChart();
-                return;
+                    StatusTotal.Text = $"{unscanned:N0} folder(s) here haven't been scanned yet — click Scan to calculate their sizes.";
             }
-
-            long parentTotal = self?.SizeBytes > 0 ? self.SizeBytes : rows.Sum(r => r.SizeBytes);
-            foreach (var r in rows)
+            else if (unscanned > 0 && _scanTask == null)
             {
-                r.PercentOfParent = parentTotal > 0 ? 100.0 * r.SizeBytes / parentTotal : 0;
-                try { r.Name = ShellIcons.FolderDisplayName(new DirectoryInfo(r.Path)); } catch { } // Explorer's name
-                _folderItems.Add(r);
+                StatusTotal.Text = $"{unscanned:N0} new folder(s) since the last scan — click Scan to update.";
+            }
+            else
+            {
+                UpdateStatus();
             }
 
-            UpdateStatus();
             DrawChart();
         }
 
@@ -1475,10 +1525,11 @@ namespace FolderDiag.Wpf
         private void UpdateStatus()
         {
             long totalSize  = _folderItems.Sum(f => f.SizeBytes);
-            int  totalFiles = _folderItems.Sum(f => f.FileCount);
-            int  totalFolders = _folderItems.Sum(f => f.FolderCount);
+            int  directFiles = _folderItems.Count(f => f.IsFile);
+            int  totalFiles = _folderItems.Sum(f => f.FileCount) + directFiles;
+            int  totalFolders = _folderItems.Count(f => !f.IsFile) + _folderItems.Sum(f => f.FolderCount);
 
-            StatusTotal.Text     = $"{_folderItems.Count} folders in view";
+            StatusTotal.Text     = $"{_folderItems.Count(f => !f.IsFile):N0} folders, {directFiles:N0} files in view";
             StatusFileCount.Text = $"   {totalFiles:N0} files  |  {totalFolders:N0} sub-folders";
             StatusSize.Text      = $"Total: {FolderItem.FormatBytes(totalSize)}";
         }
@@ -1495,7 +1546,7 @@ namespace FolderDiag.Wpf
             DetModified.Text = item.LastModified?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—";
             DetCreated.Text  = item.Created?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—";
             DetOwner.Text    = item.Owner ?? "—";
-            DetIcon.Source   = ShellIcons.Get(item.Path, true);
+            DetIcon.Source   = ShellIcons.Get(item.Path, !item.IsFile);
             DetPath.Text     = item.Path;
 
             // Animate size bar
@@ -1742,7 +1793,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // ─── File operations ──────────────────────────────────────────────
         private string? GetSelectedFolderPath()
         {
-            if (FoldersGrid.SelectedItem is FolderItem fi) return fi.Path;
+            if (FoldersGrid.SelectedItem is FolderItem fi) return fi.IsFile ? null : fi.Path;
             if (FileBrowserGrid.SelectedItem is BrowserEntry be) return be.Path;
             return null;
         }
@@ -1812,6 +1863,23 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
+            // A file row in Folder Sizes: send the file to the Recycle Bin
+            if (FoldersGrid.SelectedItem is FolderItem { IsFile: true } file)
+            {
+                if (MessageBox.Show($"Delete '{file.Path}'?\nThis sends it to the Recycle Bin.",
+                        "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+                try
+                {
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.Path,
+                        Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                        Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                    StatusTotal.Text = $"Deleted: {file.Path}";
+                    RefreshCurrentTab();
+                }
+                catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+                return;
+            }
+
             string? path = GetSelectedFolderPath();
             if (path == null) return;
             if (MessageBox.Show($"Delete '{path}'?\nThis sends it to the Recycle Bin.",
@@ -2043,6 +2111,12 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         private void OpenFolderItem(FolderItem f)
         {
+            if (f.IsFile)
+            {
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(f.Path) { UseShellExecute = true }); }
+                catch (Exception ex) { StatusTotal.Text = $"Cannot open '{f.Name}': {ex.Message}"; }
+                return;
+            }
             if (Directory.Exists(f.Path)) NavigateTo(f.Path);
             else StatusTotal.Text = $"'{f.Name}' no longer exists — it may have been moved, renamed or deleted since the last scan.";
         }
@@ -2167,6 +2241,11 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // Context menu — folder grid
         private void CtxOpenExplorer_Click(object sender, RoutedEventArgs e)
         {
+            if (FoldersGrid.SelectedItem is FolderItem { IsFile: true } file)
+            {
+                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file.Path}\"");
+                return;
+            }
             string? path = GetSelectedFolderPath();
             if (path != null)
                 System.Diagnostics.Process.Start("explorer.exe", $"\"{path}\"");

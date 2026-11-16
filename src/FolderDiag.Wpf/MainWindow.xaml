@@ -801,7 +801,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{Binding Path, Converter={StaticResource ShellIcon}, ConverterParameter=folder}" Style="{StaticResource RowIcon}"/>
+                                                    <Image Source="{Binding Converter={StaticResource ShellIcon}}" Style="{StaticResource RowIcon}"/>
                                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </DataTemplate>

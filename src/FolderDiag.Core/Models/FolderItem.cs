@@ -21,10 +21,15 @@ namespace FolderDiag.Core.Models
         public string? ScanGroup { get; set; }
 
         // Computed (not stored)
-        public string SizeFormatted => FormatBytes(SizeBytes);
-        public string AllocatedFormatted => FormatBytes(AllocatedBytes);
-        public string FileCountFormatted => FileCount.ToString("N0");
-        public string FolderCountFormatted => FolderCount.ToString("N0");
+        // View-only flags (not stored): the Folder Sizes view lists files and not-yet-scanned
+        // folders alongside scanned folders, like File Explorer.
+        public bool IsFile    { get; set; }
+        public bool IsScanned { get; set; } = true;
+
+        public string SizeFormatted => IsScanned ? FormatBytes(SizeBytes) : "Not scanned";
+        public string AllocatedFormatted => IsScanned ? FormatBytes(AllocatedBytes) : "";
+        public string FileCountFormatted => IsFile || !IsScanned ? "" : FileCount.ToString("N0");
+        public string FolderCountFormatted => IsFile || !IsScanned ? "" : FolderCount.ToString("N0");
         public string PercentFormatted => $"{PercentOfParent:F1}%";
 
         public static string FormatBytes(long bytes)
