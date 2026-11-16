@@ -19,6 +19,11 @@ on:
     tags: [ 'v*' ]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional: create a GitHub Release with this tag (e.g. v0.1.0-test1). Hyphenated tags become pre-releases.'
+        required: false
+        default: ''
 
 # Least privilege: build jobs can only read. Only the release job gets write.
 permissions:
@@ -55,8 +60,11 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          if ($env:GITHUB_REF -like 'refs/tags/v*') {
-            $v = $env:GITHUB_REF_NAME.TrimStart('v') -replace '-.*$',''
+          $tag = '${{ github.event.inputs.release_tag }}'
+          if (-not $tag -and $env:GITHUB_REF -like 'refs/tags/v*') { $tag = $env:GITHUB_REF_NAME }
+          if ($tag) {
+            if ($tag -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "Tag '$tag' must look like v1.2.3 or v1.2.3-test1" }
+            $v = $tag.TrimStart('v') -replace '-.*$',''
           } else {
             $v = "1.0.$env:GITHUB_RUN_NUMBER"
           }
@@ -213,7 +221,7 @@ jobs:
   release:
     name: GitHub Release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release_tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -225,7 +233,10 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          # On manual runs the tag is created at the commit that was built
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: dist/*
           generate_release_notes: true
           # Tags like v1.2.3-test / v1.2.3-beta are published as pre-releases
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-') }}
