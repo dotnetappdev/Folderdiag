@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:FolderDiag.Wpf.Converters"
+        xmlns:theme="clr-namespace:FolderDiag.Wpf.Theming"
         mc:Ignorable="d"
         Title="FolderDiag — Folder Size Analyzer"
         Height="820" Width="1300"
@@ -23,6 +24,14 @@
         <conv:DateTimeFormatConverter  x:Key="DtFmt"/>
         <conv:AgeDaysToStringConverter x:Key="AgeFmt"/>
         <conv:ExtensionToIconConverter x:Key="ExtIcon"/>
+        <theme:ShellIconConverter x:Key="ShellIcon"/>
+        <Style x:Key="RowIcon" TargetType="Image">
+            <Setter Property="Width" Value="{DynamicResource Fs16}"/>
+            <Setter Property="Height" Value="{DynamicResource Fs16}"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        </Style>
     </Window.Resources>
 
     <DockPanel>
@@ -788,7 +797,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="📁" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <Image Source="{Binding Path, Converter={StaticResource ShellIcon}, ConverterParameter=folder}" Style="{StaticResource RowIcon}"/>
                                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -886,7 +895,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Icon}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                    <Image Source="{Binding IconImage}" Style="{StaticResource RowIcon}"/>
                                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -977,8 +986,8 @@
                                     <DataGridTemplateColumn Header="Category" Width="40" SortMemberPath="Category">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}"
-                                                           FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Image Source="{Binding Path, Converter={StaticResource ShellIcon}, ConverterParameter=file}"
+                                                       Style="{StaticResource RowIcon}" Margin="0" HorizontalAlignment="Center" ToolTip="{Binding Category}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -1022,7 +1031,8 @@
                                     <DataGridTemplateColumn Header="Category" Width="40">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center"/>
+                                                <Image Source="{Binding Category, Converter={StaticResource ShellIcon}, ConverterParameter=category}"
+                                                       Style="{StaticResource RowIcon}" Margin="0" HorizontalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -1145,7 +1155,8 @@
                                     <DataGridTemplateColumn Header="Cat" Width="36">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="{DynamicResource Fs15}" HorizontalAlignment="Center"/>
+                                                <Image Source="{Binding Path, Converter={StaticResource ShellIcon}, ConverterParameter=file}"
+                                                       Style="{StaticResource RowIcon}" Margin="0" HorizontalAlignment="Center" ToolTip="{Binding Category}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -1323,7 +1334,8 @@
                                 <TextBlock Text="Details" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
                                            Margin="0,0,0,10" Foreground="{DynamicResource Win11TextBrush}"/>
 
-                                <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <Image x:Name="DetIcon" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,8"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <TextBlock x:Name="DetName" Text="—" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
                                            TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 

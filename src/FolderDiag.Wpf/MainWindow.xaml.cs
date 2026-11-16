@@ -39,6 +39,8 @@ namespace FolderDiag.Wpf
         public DateTime? Created  { get; set; }
         public string? Owner     { get; set; }
         public string Icon       => IsFolder ? "📁" : GetFileIcon(Extension);
+        /// <summary>The Windows shell icon (same as File Explorer).</summary>
+        public ImageSource? IconImage => FolderDiag.Wpf.Theming.ShellIcons.Get(Path, IsFolder);
 
         private static string GetFileIcon(string ext) => ext.ToLowerInvariant() switch
         {
@@ -160,8 +162,50 @@ namespace FolderDiag.Wpf
         }
 
         // ─── Navigation Pane (Drives, Quick Access, Cloud, Network) ───────
+        // ─── Navigation item header: real Windows icon + label ───────────
+        private object NavHeader(string text, ImageSource? icon)
+        {
+            var sp = new StackPanel { Orientation = Orientation.Horizontal };
+            if (icon != null)
+            {
+                var img = new Image { Source = icon, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+                img.SetResourceReference(WidthProperty, "Fs16");   // icons grow with the font size setting
+                img.SetResourceReference(HeightProperty, "Fs16");
+                RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.HighQuality);
+                sp.Children.Add(img);
+            }
+            else
+            {
+                var glyph = new TextBlock { Text = "\uE8B7", Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+                glyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
+                glyph.SetResourceReference(TextBlock.ForegroundProperty, "IconGold");
+                sp.Children.Add(glyph);
+            }
+            sp.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
+            System.Windows.Automation.AutomationProperties.SetName(sp, text); // screen readers read the label
+            return sp;
+        }
+
+        private static string ResolveSpecialFolder(string? tag) => tag switch
+        {
+            "Desktop"   => Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            "Downloads" => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
+            "Documents" => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "Pictures"  => Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            "Music"     => Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
+            "Videos"    => Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+            _           => ""
+        };
+
         private void LoadNavigationPane()
         {
+            // "This PC" special folders are declared in XAML; give them their Windows icons
+            foreach (var tvi in new[] { NavDesktop, NavDownloads, NavDocuments, NavPictures, NavMusic, NavVideos })
+            {
+                string tag = tvi.Tag?.ToString() ?? "";
+                tvi.Header = NavHeader(tag, ShellIcons.Get(ResolveSpecialFolder(tag), true));
+            }
+
             LoadDrives();
             LoadCloudStorage();
             LoadNetworkDrives();
@@ -172,21 +216,14 @@ namespace FolderDiag.Wpf
             DrivesTree.Items.Clear();
             foreach (var drive in DriveInfo.GetDrives())
             {
-                string icon = drive.DriveType switch
-                {
-                    DriveType.CDRom    => "💿",
-                    DriveType.Network  => "🌐",
-                    DriveType.Removable => "💾",
-                    _                  => "💽"
-                };
 
                 string label = drive.IsReady && !string.IsNullOrEmpty(drive.VolumeLabel)
-                    ? $"{icon}  {drive.VolumeLabel} ({drive.Name.TrimEnd('\\')})"
-                    : $"{icon}  Local Disk ({drive.Name.TrimEnd('\\')})";
+                    ? $"{drive.VolumeLabel} ({drive.Name.TrimEnd('\\')})"
+                    : $"{DefaultDriveName(drive.DriveType)} ({drive.Name.TrimEnd('\\')})";
 
                 var tvi = new TreeViewItem
                 {
-                    Header = label,
+                    Header = NavHeader(label, ShellIcons.Get(drive.RootDirectory.FullName, true)),
                     Tag    = drive.RootDirectory.FullName
                 };
 
@@ -199,6 +236,16 @@ namespace FolderDiag.Wpf
                 DrivesTree.Items.Add(tvi);
             }
         }
+
+        // Windows 11 Explorer names for unlabelled drives
+        private static string DefaultDriveName(DriveType t) => t switch
+        {
+            DriveType.CDRom     => "DVD Drive",
+            DriveType.Removable => "USB Drive",
+            DriveType.Network   => "Network Drive",
+            DriveType.Ram       => "RAM Disk",
+            _                   => "Local Disk",
+        };
 
         private void LoadCloudStorage()
         {
@@ -218,7 +265,7 @@ namespace FolderDiag.Wpf
             {
                 if (!string.IsNullOrEmpty(p) && Directory.Exists(p))
                 {
-                    AddCloudNode("☁  OneDrive", p);
+                    AddCloudNode("OneDrive", p);
                     break;
                 }
             }
@@ -233,7 +280,7 @@ namespace FolderDiag.Wpf
             };
             foreach (var p in googlePaths)
             {
-                if (Directory.Exists(p)) { AddCloudNode("☁  Google Drive", p); break; }
+                if (Directory.Exists(p)) { AddCloudNode("Google Drive", p); break; }
             }
 
             // Dropbox
@@ -244,19 +291,19 @@ namespace FolderDiag.Wpf
             };
             foreach (var p in dropboxPaths)
             {
-                if (Directory.Exists(p)) { AddCloudNode("☁  Dropbox", p); break; }
+                if (Directory.Exists(p)) { AddCloudNode("Dropbox", p); break; }
             }
 
             // iCloud Drive
             var icloudPath = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "iCloudDrive");
-            if (Directory.Exists(icloudPath)) AddCloudNode("☁  iCloud Drive", icloudPath);
+            if (Directory.Exists(icloudPath)) AddCloudNode("iCloud Drive", icloudPath);
 
             // Box
             var boxPath = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Box");
-            if (Directory.Exists(boxPath)) AddCloudNode("☁  Box", boxPath);
+            if (Directory.Exists(boxPath)) AddCloudNode("Box", boxPath);
 
             if (CloudTree.Items.Count == 0)
             {
@@ -267,7 +314,7 @@ namespace FolderDiag.Wpf
 
         private void AddCloudNode(string label, string path)
         {
-            var tvi = new TreeViewItem { Header = label, Tag = path };
+            var tvi = new TreeViewItem { Header = NavHeader(label, ShellIcons.Get(path, true)), Tag = path, ToolTip = path };
             tvi.Items.Add(new TreeViewItem { Header = "Loading…" });
             tvi.Expanded += NavTreeItem_Expanded;
             CloudTree.Items.Add(tvi);
@@ -283,7 +330,7 @@ namespace FolderDiag.Wpf
             {
                 var tvi = new TreeViewItem
                 {
-                    Header = $"🌐  {d.Name.TrimEnd('\\')}",
+                    Header = NavHeader(d.Name.TrimEnd('\\'), ShellIcons.Get(d.RootDirectory.FullName, true)),
                     Tag    = d.RootDirectory.FullName
                 };
                 tvi.Items.Add(new TreeViewItem { Header = "Loading…" });
@@ -312,7 +359,7 @@ namespace FolderDiag.Wpf
                     {
                         var sub = new TreeViewItem
                         {
-                            Header = $"📁  {System.IO.Path.GetFileName(dir)}",
+                            Header = NavHeader(System.IO.Path.GetFileName(dir), ShellIcons.Get(dir, true)),
                             Tag    = dir
                         };
                         try
@@ -346,7 +393,7 @@ namespace FolderDiag.Wpf
                 ("🎬", "Videos",     Environment.SpecialFolder.MyVideos),
             };
 
-            foreach (var (icon, label, folder) in special)
+            foreach (var (_, label, folder) in special)
             {
                 string path = folder == Environment.SpecialFolder.UserProfile
                     ? System.IO.Path.Combine(Environment.GetFolderPath(folder), "Downloads")
@@ -354,7 +401,7 @@ namespace FolderDiag.Wpf
 
                 var tvi = new TreeViewItem
                 {
-                    Header = $"{icon}  {label}",
+                    Header = NavHeader(label, ShellIcons.Get(path, true)),
                     Tag    = path
                 };
                 QuickAccessTree.Items.Add(tvi);
@@ -365,7 +412,7 @@ namespace FolderDiag.Wpf
             {
                 var tvi = new TreeViewItem
                 {
-                    Header = $"📌  {System.IO.Path.GetFileName(p)}",
+                    Header = NavHeader(System.IO.Path.GetFileName(p.TrimEnd('\\')) is { Length: > 0 } n ? n : p, ShellIcons.Get(p, true)),
                     Tag    = p,
                     ToolTip = p
                 };
@@ -1267,6 +1314,7 @@ namespace FolderDiag.Wpf
             DetModified.Text = item.LastModified?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—";
             DetCreated.Text  = item.Created?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—";
             DetOwner.Text    = item.Owner ?? "—";
+            DetIcon.Source   = ShellIcons.Get(item.Path, true);
             DetPath.Text     = item.Path;
 
             // Animate size bar
@@ -1645,16 +1693,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         {
             if (sender is TreeViewItem tvi)
             {
-                string path = tvi.Tag?.ToString() switch
-                {
-                    "Desktop"   => Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    "Downloads" => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
-                    "Documents" => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                    "Pictures"  => Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                    "Music"     => Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
-                    "Videos"    => Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
-                    _           => ""
-                };
+                string path = ResolveSpecialFolder(tvi.Tag?.ToString());
                 if (!string.IsNullOrEmpty(path)) NavigateTo(path);
             }
         }
