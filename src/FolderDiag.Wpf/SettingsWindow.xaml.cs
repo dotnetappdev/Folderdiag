@@ -278,7 +278,7 @@ namespace FolderDiag.Wpf
             {
                 string dir = Path.GetDirectoryName(SettingsService.FilePath)!;
                 Directory.CreateDirectory(dir);
-                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo(App.ExplorerExe, $"\"{dir}\"") { UseShellExecute = false });
             }
             catch (Exception ex) { MessageBox.Show(this, ex.Message, "Settings"); }
         }

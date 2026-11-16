@@ -584,17 +584,37 @@ namespace FolderDiag.Wpf
         // ─── Navigation ───────────────────────────────────────────────────
         private void NavigateTo(string path)
         {
-            if (!Directory.Exists(path) && !File.Exists(path)) return;
+            if (string.IsNullOrWhiteSpace(path)) return;
+            if (!Directory.Exists(path))
+            {
+                // A file: show its folder with the file selected (like Explorer's "Open file location")
+                if (File.Exists(path) && System.IO.Path.GetDirectoryName(path) is string folder)
+                {
+                    NavigateTo(folder);
+                    SelectPath(path);
+                }
+                return;
+            }
             path = NormalizePath(path);
+            if (string.Equals(path, _currentPath, StringComparison.OrdinalIgnoreCase) && _navHistory.Count > 0)
+            {
+                RefreshCurrentTab();   // same folder: just refresh, don't add a duplicate history entry
+                return;
+            }
 
             // History
             if (_navIndex < _navHistory.Count - 1)
                 _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
             _navHistory.Add(path);
             _navIndex = _navHistory.Count - 1;
+            ShowFolder(path);
+        }
 
+        /// <summary>Displays a folder (no history change). Used by NavigateTo and Back/Forward.</summary>
+        private void ShowFolder(string path)
+        {
             BtnNavBack.IsEnabled    = _navIndex > 0;
-            BtnNavForward.IsEnabled = false;
+            BtnNavForward.IsEnabled = _navIndex < _navHistory.Count - 1;
 
             _currentPath = path;
             TxtAddressBar.Text = path;
@@ -1443,7 +1463,7 @@ namespace FolderDiag.Wpf
             foreach (var (item, idx) in items.Select((it, i) => (it, i)))
             {
                 double wPct = (double)item.SizeBytes / total;
-                double bw   = remaining * wPct;
+                double bw   = w * wPct;   // share of the full width (was 'remaining', which shrank later tiles)
 
                 var rect = new Rectangle
                 {
@@ -1515,10 +1535,10 @@ namespace FolderDiag.Wpf
         // ─── Chart click-through (drill down) ─────────────────────────────
         private void ChartBar_Click(object sender, MouseButtonEventArgs e)
         {
-            if (((FrameworkElement)sender).Tag is FolderItem fi)
+            if (sender is FrameworkElement { Tag: FolderItem fi })
             {
-                NavigateTo(fi.Path);
                 MainTabCtrl.SelectedIndex = 0;
+                OpenFolderItem(fi);   // folders drill in, files open in their app
             }
         }
 
@@ -1552,11 +1572,11 @@ namespace FolderDiag.Wpf
             DetIcon.Source   = ShellIcons.Get(item.Path, !item.IsFile);
             DetPath.Text     = item.Path;
 
-            // Animate size bar
-            DetSizeBar.Width = 0;
-            DetailsPanel.UpdateLayout();
-            double maxW = ((Border)((Grid)((ScrollViewer)((Border)DetSizeBar.Parent).Parent).Content).Children[^1]).ActualWidth;
-            DetSizeBar.Width = Math.Max(2, (DetailsPanel.ActualWidth - 24) * item.PercentOfParent / 100.0);
+            // Size bar: share of the bar's track (its parent Grid). The old code cast the parent to
+            // Border — it's a Grid — and crashed with InvalidCastException on every selection.
+            double track = (DetSizeBar.Parent as FrameworkElement)?.ActualWidth ?? 0;
+            if (track <= 0) track = Math.Max(0, DetailsPanel.ActualWidth - 24);
+            DetSizeBar.Width = item.IsScanned ? Math.Max(2, track * Math.Clamp(item.PercentOfParent, 0, 100) / 100.0) : 0;
         }
 
         // ─── Reports ──────────────────────────────────────────────────────
@@ -1565,9 +1585,9 @@ namespace FolderDiag.Wpf
             _reportItems.Clear();
             using var db = new FolderDiagDbContext(_dbOpts);
 
-            IQueryable<FileItem> q = db.FileItems;
+            IQueryable<FileItem> q = db.FileItems.AsNoTracking();
             if (!string.IsNullOrEmpty(_currentPath))
-                q = q.Where(f => f.FolderPath.StartsWith(_currentPath));
+                q = ScanStore.FilesUnder(q, _currentPath);
 
             IEnumerable<FileItem> result = type switch
             {
@@ -1575,10 +1595,11 @@ namespace FolderDiag.Wpf
                 "Oldest Files"              => q.OrderBy(f => f.Modified),
                 "Newest Files"              => q.OrderByDescending(f => f.Modified),
                 "Temporary Files"           => q.Where(f => f.IsTemp).OrderByDescending(f => f.SizeBytes),
-                "Duplicate Files (by size)" => q.GroupBy(f => f.SizeBytes)
-                                                 .Where(g => g.Count() > 1)
-                                                 .SelectMany(g => g)
-                                                 .OrderByDescending(f => f.SizeBytes),
+                // Sizes that occur more than once, then the files with those sizes (SQL-translatable;
+                // GroupBy(...).SelectMany(...) isn't, and threw at runtime). Empty files are ignored.
+                "Duplicate Files (by size)" => q.Where(f => f.SizeBytes > 0 &&
+                                                   q.Where(o => o.SizeBytes == f.SizeBytes).Skip(1).Any())
+                                                 .OrderByDescending(f => f.SizeBytes).ThenBy(f => f.Name),
                 "Files by Category"         => q.OrderByDescending(f => f.SizeBytes),
                 "Files by Owner"            => q.OrderBy(f => f.Owner),
                 "Files by Age Bucket"       => q.OrderBy(f => f.Modified),
@@ -1597,17 +1618,21 @@ namespace FolderDiag.Wpf
             _classifyItems.Clear();
             using var db = new FolderDiagDbContext(_dbOpts);
 
-            var q = db.FileItems.AsQueryable();
+            var q = db.FileItems.AsNoTracking();
             if (!string.IsNullOrEmpty(_currentPath))
-                q = q.Where(f => f.FolderPath.StartsWith(_currentPath));
+                q = ScanStore.FilesUnder(q, _currentPath);
 
-            var groups = q.AsEnumerable()
-                .GroupBy(f => FileItem.GetCategory(f.Extension))
+            // Group by extension in SQL, then map extensions to categories here (much less data
+            // than pulling every file row into memory)
+            var groups = q.GroupBy(f => f.Extension)
+                .Select(g => new { Extension = g.Key, Size = g.Sum(f => f.SizeBytes), Count = g.Count() })
+                .AsEnumerable()
+                .GroupBy(x => FileItem.GetCategory(x.Extension))
                 .Select(g => new
                 {
                     Category  = g.Key,
-                    TotalSize = g.Sum(f => f.SizeBytes),
-                    Count     = g.Count()
+                    TotalSize = g.Sum(x => x.Size),
+                    Count     = g.Sum(x => x.Count)
                 })
                 .OrderByDescending(g => g.TotalSize)
                 .ToList();
@@ -1635,9 +1660,9 @@ namespace FolderDiag.Wpf
             _searchItems.Clear();
             using var db = new FolderDiagDbContext(_dbOpts);
 
-            var q = db.FileItems.AsQueryable();
+            var q = db.FileItems.AsNoTracking();
             if (!string.IsNullOrEmpty(_currentPath))
-                q = q.Where(f => f.FolderPath.StartsWith(_currentPath));
+                q = ScanStore.FilesUnder(q, _currentPath);
 
             string name = SrchName.Text.Trim();
             string ext  = SrchExt.Text.Trim();
@@ -1651,8 +1676,12 @@ namespace FolderDiag.Wpf
                 q = q.Where(f => f.Owner != null && f.Owner.Contains(owner));
 
             string cat = (SrchCategory.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
-            if (cat != "All")
-                q = q.Where(f => FileItem.GetCategory(f.Extension) == cat);
+            // Category filter in SQL via the category's extensions (calling GetCategory inside the
+            // query couldn't be translated and threw at runtime)
+            if (cat == "Other")
+                q = q.Where(f => !FileItem.AllCategorisedExtensions.Contains(f.Extension));
+            else if (cat != "All" && FileItem.CategoryExtensions.TryGetValue(cat, out var exts))
+                q = q.Where(f => exts.Contains(f.Extension));
 
             // Min size
             long minBytes = (SrchMinSize.SelectedItem as ComboBoxItem)?.Content?.ToString() switch
@@ -1686,7 +1715,7 @@ namespace FolderDiag.Wpf
             foreach (var f in q.OrderByDescending(f => f.SizeBytes).Take(500).ToList())
                 _searchItems.Add(f);
 
-            MainTabCtrl.SelectedIndex = 4;
+            MainTabCtrl.SelectedIndex = 5;   // Search tab (4 is Classification)
             StatusTotal.Text = $"Search returned {_searchItems.Count} results";
         }
 
@@ -1704,9 +1733,19 @@ namespace FolderDiag.Wpf
         private void SaveSnapshot(string name)
         {
             using var db = new FolderDiagDbContext(_dbOpts);
-            long total  = db.FolderItems.Where(f => f.Path.StartsWith(_currentPath)).Sum(f => f.SizeBytes);
-            int  files  = db.FileItems.Where(f => f.FolderPath.StartsWith(_currentPath)).Count();
-            int  folders = db.FolderItems.Where(f => f.Path.StartsWith(_currentPath)).Count();
+            // The folder's own scanned row already holds the recursive total; summing every row
+            // below it (as before) counted nested folders many times over.
+            var self = db.FolderItems.AsNoTracking()
+                .Where(f => EF.Functions.Collate(f.Path, "NOCASE") == _currentPath)
+                .OrderByDescending(f => f.ScannedAt).FirstOrDefault();
+            if (self == null)
+            {
+                MessageBox.Show(this, "Scan this folder first, then take a snapshot.", "Snapshot", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            long total   = self.SizeBytes;
+            int  files   = self.FileCount;
+            int  folders = self.FolderCount;
 
             db.ScanSnapshots.Add(new ScanSnapshot
             {
@@ -1736,8 +1775,16 @@ namespace FolderDiag.Wpf
                     f.PercentOfParent.ToString("F2", CultureInfo.InvariantCulture),
                     Csv(f.LastModified?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)), Csv(f.Owner)));
 
-            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-            StatusTotal.Text = $"Exported CSV → {dlg.FileName}";
+            try
+            {
+                File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+                StatusTotal.Text = $"Exported CSV → {dlg.FileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, $"Couldn't save {dlg.FileName}:\n{ex.Message}\n\nIf it's open in another program (e.g. Excel), close it and try again.",
+                                "Export", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void BtnExportXml_Click(object sender, RoutedEventArgs e)
@@ -1760,8 +1807,16 @@ namespace FolderDiag.Wpf
                             new XAttribute("PctOfParent",  f.PercentOfParent.ToString("F2")),
                             new XAttribute("LastModified", f.LastModified?.ToString("o") ?? ""),
                             new XAttribute("Owner",        f.Owner ?? "")))));
-            doc.Save(dlg.FileName);
-            StatusTotal.Text = $"Exported XML → {dlg.FileName}";
+            try
+            {
+                doc.Save(dlg.FileName);
+                StatusTotal.Text = $"Exported XML → {dlg.FileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, $"Couldn't save {dlg.FileName}:\n{ex.Message}\n\nIf it's open in another program (e.g. Excel), close it and try again.",
+                                "Export", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void BtnExportHtml_Click(object sender, RoutedEventArgs e)
@@ -1789,8 +1844,16 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             }
 
             sb.Append("</tbody></table></body></html>");
-            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-            StatusTotal.Text = $"Exported HTML → {dlg.FileName}";
+            try
+            {
+                File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+                StatusTotal.Text = $"Exported HTML → {dlg.FileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, $"Couldn't save {dlg.FileName}:\n{ex.Message}\n\nIf it's open in another program (e.g. Excel), close it and try again.",
+                                "Export", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         // ─── File operations ──────────────────────────────────────────────
@@ -2021,29 +2084,21 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         }
 
         // Nav arrows
-        private void BtnNavBack_Click(object sender, RoutedEventArgs e)
+        // Back/Forward skip folders that no longer exist and update everything NavigateTo does
+        // (address bar, breadcrumb, folder watcher) — previously the watcher stayed on the old folder.
+        private void BtnNavBack_Click(object sender, RoutedEventArgs e) => StepHistory(-1);
+        private void BtnNavForward_Click(object sender, RoutedEventArgs e) => StepHistory(+1);
+
+        private void StepHistory(int direction)
         {
-            if (_navIndex > 0)
+            for (int i = _navIndex + direction; i >= 0 && i < _navHistory.Count; i += direction)
             {
-                _navIndex--;
-                _currentPath = _navHistory[_navIndex];
-                TxtAddressBar.Text = _currentPath;
-                BtnNavBack.IsEnabled    = _navIndex > 0;
-                BtnNavForward.IsEnabled = true;
-                RefreshCurrentTab();
+                if (!Directory.Exists(_navHistory[i])) continue;
+                _navIndex = i;
+                ShowFolder(_navHistory[i]);
+                return;
             }
-        }
-        private void BtnNavForward_Click(object sender, RoutedEventArgs e)
-        {
-            if (_navIndex < _navHistory.Count - 1)
-            {
-                _navIndex++;
-                _currentPath = _navHistory[_navIndex];
-                TxtAddressBar.Text = _currentPath;
-                BtnNavBack.IsEnabled    = true;
-                BtnNavForward.IsEnabled = _navIndex < _navHistory.Count - 1;
-                RefreshCurrentTab();
-            }
+            StatusTotal.Text = direction < 0 ? "No earlier folder to go back to." : "No later folder to go forward to.";
         }
         private void BtnNavUp_Click(object sender, RoutedEventArgs e)
         {
@@ -2205,17 +2260,21 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
             // Compare top-level folder sizes at the time of each snapshot
             // (simplified — compares current folder data between two root paths)
-            var folders1 = db.FolderItems.Where(f => f.Path.StartsWith(snap1.RootPath)).ToList();
-            var folders2 = db.FolderItems.Where(f => f.Path.StartsWith(snap2.RootPath)).ToList();
+            // Dictionaries by path (case-insensitive): the old per-path FirstOrDefault scan was
+            // O(n²) and froze the UI on large drives
+            static Dictionary<string, long> SizesUnder(FolderDiagDbContext db, string root) =>
+                ScanStore.FoldersBelow(db.FolderItems.AsNoTracking(), root)
+                    .Select(f => new { f.Path, f.SizeBytes }).AsEnumerable()
+                    .GroupBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().SizeBytes, StringComparer.OrdinalIgnoreCase);
 
-            var allPaths = folders1.Select(f => f.Path)
-                .Union(folders2.Select(f => f.Path))
-                .Distinct();
+            var folders1 = SizesUnder(db, snap1.RootPath);
+            var folders2 = SizesUnder(db, snap2.RootPath);
 
-            foreach (var path in allPaths)
+            foreach (var path in folders1.Keys.Union(folders2.Keys, StringComparer.OrdinalIgnoreCase))
             {
-                long before = folders1.FirstOrDefault(f => f.Path == path)?.SizeBytes ?? 0;
-                long after  = folders2.FirstOrDefault(f => f.Path == path)?.SizeBytes ?? 0;
+                long before = folders1.GetValueOrDefault(path);
+                long after  = folders2.GetValueOrDefault(path);
                 if (before == after) continue;
 
                 _compareItems.Add(new CompareRow
@@ -2232,12 +2291,12 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         {
             if (FoldersGrid.SelectedItem is FolderItem { IsFile: true } file)
             {
-                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file.Path}\"");
+                System.Diagnostics.Process.Start(App.ExplorerExe, $"/select,\"{file.Path}\"");
                 return;
             }
             string? path = GetSelectedFolderPath();
             if (path != null)
-                System.Diagnostics.Process.Start("explorer.exe", $"\"{path}\"");
+                System.Diagnostics.Process.Start(App.ExplorerExe, $"\"{path}\"");
         }
         private void CtxScanFolder_Click(object sender, RoutedEventArgs e)
         {
@@ -2285,20 +2344,15 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         {
             FileItem? fi = ReportsGrid.SelectedItem as FileItem ?? SearchGrid.SelectedItem as FileItem;
             if (fi != null)
-                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{fi.Path}\"");
+                System.Diagnostics.Process.Start(App.ExplorerExe, $"/select,\"{fi.Path}\"");
         }
         private void CtxDeleteFile_Click(object sender, RoutedEventArgs e)
         {
             FileItem? fi = ReportsGrid.SelectedItem as FileItem ?? SearchGrid.SelectedItem as FileItem;
             if (fi == null) return;
-            if (MessageBox.Show($"Delete '{fi.Name}'?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning)
-                != MessageBoxResult.Yes) return;
-            try
-            {
-                File.Delete(fi.Path);
-                StatusTotal.Text = $"Deleted: {fi.Path}";
-            }
-            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+            // Recycle Bin (recoverable) with Windows' own dialogs — this used to delete permanently
+            DeleteEntry(new Entry(fi.Path, fi.Name, IsFolder: false), permanently: false);
+            if (!File.Exists(fi.Path)) { _reportItems.Remove(fi); _searchItems.Remove(fi); }
         }
     }
 

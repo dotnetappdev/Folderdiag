@@ -82,7 +82,7 @@ namespace FolderDiag.Data
                 .FirstOrDefault();
 
             // Remove this folder and everything below it (but not sibling "C:\Users\me2" when rescanning "C:\Users\me")
-            string prefix = EscapeLike(rootPath.EndsWith('\\') || rootPath.EndsWith('/') ? rootPath : rootPath + Path.DirectorySeparatorChar) + "%";
+            string prefix = LikeUnder(rootPath);
             db.FolderItems.Where(f => EF.Functions.Collate(f.Path, "NOCASE") == rootPath
                                    || EF.Functions.Like(f.Path, prefix, "\\")).ExecuteDelete();
             db.FileItems.Where(f => EF.Functions.Collate(f.FolderPath, "NOCASE") == rootPath
@@ -159,6 +159,25 @@ namespace FolderDiag.Data
         private static string Identifier(string name)
             => System.Text.RegularExpressions.Regex.IsMatch(name, "^[A-Za-z_][A-Za-z0-9_]*$")
                 ? name : throw new InvalidOperationException($"Unexpected table name '{name}'");
+
+        /// <summary>LIKE pattern matching everything strictly inside <paramref name="folder"/> (use with escape '\\').</summary>
+        public static string LikeUnder(string folder)
+            => EscapeLike(folder.EndsWith('\\') || folder.EndsWith('/') ? folder
+                          : folder + (folder.Contains('\\') ? '\\' : Path.DirectorySeparatorChar)) + "%";
+
+        /// <summary>Files in <paramref name="folder"/> or any sub-folder (case-insensitive, no "C:\\Users\\me2" false matches).</summary>
+        public static IQueryable<FileItem> FilesUnder(IQueryable<FileItem> q, string folder)
+        {
+            string like = LikeUnder(folder);
+            return q.Where(f => EF.Functions.Collate(f.FolderPath, "NOCASE") == folder || EF.Functions.Like(f.FolderPath, like, "\\"));
+        }
+
+        /// <summary>Folders strictly below <paramref name="folder"/>.</summary>
+        public static IQueryable<FolderItem> FoldersBelow(IQueryable<FolderItem> q, string folder)
+        {
+            string like = LikeUnder(folder);
+            return q.Where(f => EF.Functions.Like(f.Path, like, "\\"));
+        }
 
         private static string EscapeLike(string s) => s.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 

@@ -28,23 +28,33 @@ namespace FolderDiag.Core.Models
         public string Category => GetCategory(Extension);
         public int AgeInDays => Modified.HasValue ? (int)(DateTime.Now - Modified.Value).TotalDays : 0;
 
+        /// <summary>File categories and their extensions (lower case, with the dot as stored).</summary>
+        public static readonly IReadOnlyDictionary<string, string[]> CategoryExtensions = new Dictionary<string, string[]>
+        {
+            ["Images"]      = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg", ".ico" },
+            ["Video"]       = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm", ".m4v" },
+            ["Audio"]       = new[] { ".mp3", ".wav", ".flac", ".aac", ".wma", ".ogg", ".m4a" },
+            ["Documents"]   = new[] { ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".odt", ".ods" },
+            ["Archives"]    = new[] { ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz" },
+            ["Executables"] = new[] { ".exe", ".msi", ".dll", ".sys", ".drv", ".ocx" },
+            ["Source Code"] = new[] { ".cs", ".vb", ".cpp", ".c", ".h", ".py", ".js", ".ts", ".java", ".rs", ".go" },
+            ["Temporary"]   = new[] { ".tmp", ".temp", ".bak", ".old", ".log", ".dmp" },
+            ["Config"]      = new[] { ".xml", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf" },
+            ["Text"]        = new[] { ".txt", ".md", ".rtf", ".csv", ".tsv" },
+        };
+
+        private static readonly Dictionary<string, string> CategoryByExtension =
+            CategoryExtensions.SelectMany(kv => kv.Value.Select(e => (e, kv.Key)))
+                              .ToDictionary(x => x.e, x => x.Key, StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>All extensions that belong to a named category (used to filter in SQL).</summary>
+        public static readonly string[] AllCategorisedExtensions = CategoryByExtension.Keys.ToArray();
+
         public static string GetCategory(string ext)
         {
-            var e = ext.ToLowerInvariant().TrimStart('.');
-            return e switch
-            {
-                "jpg" or "jpeg" or "png" or "gif" or "bmp" or "tiff" or "webp" or "svg" or "ico" => "Images",
-                "mp4" or "avi" or "mkv" or "mov" or "wmv" or "flv" or "webm" or "m4v" => "Video",
-                "mp3" or "wav" or "flac" or "aac" or "wma" or "ogg" or "m4a" => "Audio",
-                "doc" or "docx" or "xls" or "xlsx" or "ppt" or "pptx" or "pdf" or "odt" or "ods" => "Documents",
-                "zip" or "rar" or "7z" or "tar" or "gz" or "bz2" or "xz" => "Archives",
-                "exe" or "msi" or "dll" or "sys" or "drv" or "ocx" => "Executables",
-                "cs" or "vb" or "cpp" or "c" or "h" or "py" or "js" or "ts" or "java" or "rs" or "go" => "Source Code",
-                "tmp" or "temp" or "bak" or "old" or "log" or "dmp" => "Temporary",
-                "xml" or "json" or "yaml" or "yml" or "toml" or "ini" or "cfg" or "conf" => "Config",
-                "txt" or "md" or "rtf" or "csv" or "tsv" => "Text",
-                _ => "Other"
-            };
+            if (string.IsNullOrEmpty(ext)) return "Other";
+            string e = ext.StartsWith('.') ? ext : "." + ext;
+            return CategoryByExtension.TryGetValue(e, out var cat) ? cat : "Other";
         }
     }
 }
