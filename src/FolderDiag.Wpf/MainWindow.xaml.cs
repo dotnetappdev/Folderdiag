@@ -731,35 +731,39 @@ namespace FolderDiag.Wpf
 
             var cts = new CancellationTokenSource();
             _scanCts = cts;
-            BtnScan.IsEnabled  = false;
-            BtnStop.IsEnabled  = true;
-            ScanProgress.Visibility = Visibility.Visible;
-            ScanProgress.IsIndeterminate = true;
-            StatusTotal.Text   = $"Scanning {scanPath}…";
+            BtnScan.IsEnabled = false;
+            BtnStop.IsEnabled = true;
+
+            long expectedBytes = EstimateScanBytes(scanPath);
+            ShowScanBanner(scanPath, expectedBytes);
+            ScanProgress lastProgress = default;
 
             // Progress<T> marshals back to the UI thread; the scanner throttles to ~5 updates/sec
             var progress = new Progress<ScanProgress>(p =>
             {
                 if (!ReferenceEquals(_scanCts, cts)) return;
-                double secs = Math.Max(0.1, p.Elapsed.TotalSeconds);
-                StatusTotal.Text = $"Scanning… {p.Files:N0} files · {FolderItem.FormatBytes(p.Bytes)} · " +
-                                   $"{p.Files / secs:N0} files/s — {System.IO.Path.GetFileName(p.CurrentPath.TrimEnd('\\'))}";
+                lastProgress = p;
+                UpdateScanBanner(p, expectedBytes);
             });
-            var started = DateTime.Now;
+
             var task = Task.Run(() => PerformScan(scanPath, progress, cts.Token));
             _scanTask = task;
             try
             {
-                await task;
-                StatusTotal.Text = $"Scan complete in {(DateTime.Now - started).TotalSeconds:N1}s.";
+                var totals = await task;
+                FinishScanBanner(ScanOutcome.Completed,
+                    $"Scan complete — {scanPath}",
+                    $"{totals.Files:N0} files · {totals.Folders:N0} folders · {FolderItem.FormatBytes(totals.Size)} in {FormatDuration(_scanClock.Elapsed)}");
             }
             catch (OperationCanceledException)
             {
-                StatusTotal.Text = "Scan stopped.";
+                if (ReferenceEquals(_scanTask, task))
+                    FinishScanBanner(ScanOutcome.Stopped, "Scan stopped — previous results kept",
+                        $"Stopped after {lastProgress.Files:N0} files · {FolderItem.FormatBytes(lastProgress.Bytes)} · {FormatDuration(_scanClock.Elapsed)}");
             }
             catch (Exception ex)
             {
-                StatusTotal.Text = $"Scan error: {ex.Message}";
+                FinishScanBanner(ScanOutcome.Failed, "Scan failed", ex.Message);
             }
             finally
             {
@@ -769,9 +773,8 @@ namespace FolderDiag.Wpf
                     // Only the most recent scan updates the UI
                     _scanTask = null;
                     _scanCts  = null;
-                    BtnScan.IsEnabled  = true;
-                    BtnStop.IsEnabled  = false;
-                    ScanProgress.Visibility = Visibility.Collapsed;
+                    BtnScan.IsEnabled = true;
+                    BtnStop.IsEnabled = false;
                     RefreshCurrentTab();
                 }
             }
@@ -779,7 +782,7 @@ namespace FolderDiag.Wpf
 
         // Fast scanner (FolderDiag.Core.Scanning) + streaming bulk writer (FolderDiag.Data.ScanStore).
         // Runs in one transaction: stopping a scan keeps the previous results.
-        private void PerformScan(string rootPath, IProgress<ScanProgress> progress, CancellationToken ct)
+        private ScanTotals PerformScan(string rootPath, IProgress<ScanProgress> progress, CancellationToken ct)
         {
             var settings = SettingsService.Current;
             var options = new ScanOptions
@@ -788,13 +791,187 @@ namespace FolderDiag.Wpf
                 OwnerResolver  = settings.ReadOwners ? OwnerResolver.Shared.Resolve : null,
                 FileOwners     = settings.ReadOwners,
             };
-            ScanStore.ScanAndStore(_dbOpts, rootPath, options, progress, ct);
+            return ScanStore.ScanAndStore(_dbOpts, rootPath, options, progress, ct);
         }
+
+        // ─── Scan feedback (banner, status bar, taskbar) ─────────────────
+        private enum ScanOutcome { Completed, Stopped, Failed }
+        // Taskbar button progress (like File Explorer copies) — visible even when minimised
+        private System.Windows.Shell.TaskbarItemInfo Taskbar => TaskbarItemInfo ??= new System.Windows.Shell.TaskbarItemInfo();
+        private readonly System.Diagnostics.Stopwatch _scanClock = new();
+        private System.Windows.Threading.DispatcherTimer? _bannerHideTimer;
+
+        /// <summary>
+        /// Bytes we expect to read, for a real percentage: a drive's used space, or the folder's
+        /// size from its last scan. 0 = unknown (progress bar shows the sliding "busy" animation).
+        /// </summary>
+        private long EstimateScanBytes(string path)
+        {
+            try
+            {
+                string? root = System.IO.Path.GetPathRoot(path);
+                if (!string.IsNullOrEmpty(root) && string.Equals(NormalizePath(root), path, StringComparison.OrdinalIgnoreCase))
+                {
+                    var d = new DriveInfo(root);
+                    if (d.IsReady) return d.TotalSize - d.TotalFreeSpace;
+                }
+                using var db = new FolderDiagDbContext(_dbOpts);
+                return db.FolderItems.AsNoTracking()
+                    .Where(f => EF.Functions.Collate(f.Path, "NOCASE") == path)
+                    .Select(f => f.SizeBytes).FirstOrDefault();
+            }
+            catch { return 0; }
+        }
+
+        private void ShowScanBanner(string path, long expectedBytes)
+        {
+            _bannerHideTimer?.Stop();
+            _scanClock.Restart();
+
+            ScanBanner.BeginAnimation(OpacityProperty, null);
+            ScanBanner.Opacity = 1;
+            ScanBanner.Visibility = Visibility.Visible;
+            BannerStop.Visibility = Visibility.Visible;
+            BannerDismiss.Visibility = Visibility.Collapsed;
+
+            BannerIcon.Text = "\uE895"; // Sync
+            BannerIcon.SetResourceReference(TextBlock.ForegroundProperty, "Win11AccentBrush");
+            BannerIconBg.SetResourceReference(Shape.FillProperty, "Win11SelectBrush");
+            SetSpinner(true);
+
+            BannerTitle.Text   = $"Scanning {path}";
+            BannerDetail.Text  = expectedBytes > 0 ? $"Estimated {FolderItem.FormatBytes(expectedBytes)} to read" : "Counting files…";
+            BannerCurrent.Text = "";
+            BannerPercent.Text = "";
+            bool known = expectedBytes > 0;
+            BannerProgress.IsIndeterminate = !known;
+            BannerProgress.Value = 0;
+            BannerProgress.Visibility = Visibility.Visible;
+
+            ScanProgress.Visibility = Visibility.Visible;
+            ScanProgress.IsIndeterminate = !known;
+            ScanProgress.Value = 0;
+            StatusTotal.Text = $"Scanning {path}…";
+
+            Taskbar.ProgressState = known ? System.Windows.Shell.TaskbarItemProgressState.Normal
+                                          : System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
+            Taskbar.ProgressValue = 0;
+        }
+
+        private void UpdateScanBanner(ScanProgress p, long expectedBytes)
+        {
+            var elapsed = p.Elapsed;
+            double secs = Math.Max(0.1, elapsed.TotalSeconds);
+            string rate = $"{p.Files / secs:N0} files/s";
+            string detail = $"{p.Files:N0} files · {p.Folders:N0} folders · {FolderItem.FormatBytes(p.Bytes)} · {rate} · {FormatDuration(elapsed)}";
+
+            if (expectedBytes > 0)
+            {
+                // Bytes-based estimate; capped at 99% because some space (page file, system files) can't be read
+                double pct = Math.Min(99, 100.0 * p.Bytes / expectedBytes);
+                BannerProgress.Value = pct;
+                ScanProgress.Value   = pct;
+                Taskbar.ProgressValue = pct / 100;
+                BannerPercent.Text = $"{pct:0}%";
+                if (pct >= 3 && secs >= 3 && p.Bytes > 0)
+                {
+                    var left = TimeSpan.FromSeconds(secs * (expectedBytes - p.Bytes) / p.Bytes);
+                    if (left > TimeSpan.Zero) detail += $" · about {FormatDuration(left)} left";
+                }
+            }
+
+            BannerDetail.Text  = detail;
+            BannerCurrent.Text = p.CurrentPath;
+            StatusTotal.Text   = $"Scanning… {p.Files:N0} files · {FolderItem.FormatBytes(p.Bytes)} · {rate}";
+        }
+
+        private void FinishScanBanner(ScanOutcome outcome, string title, string detail)
+        {
+            _scanClock.Stop();
+            SetSpinner(false);
+            BannerStop.Visibility = Visibility.Collapsed;
+            BannerDismiss.Visibility = Visibility.Visible;
+            BannerCurrent.Text = "";
+            ScanProgress.Visibility = Visibility.Collapsed;
+
+            (string glyph, Color color) = outcome switch
+            {
+                ScanOutcome.Completed => ("\uE73E", Color.FromRgb(0x10, 0x7C, 0x10)), // check
+                ScanOutcome.Stopped   => ("\uE71A", Color.FromRgb(0x9D, 0x5D, 0x00)), // stop
+                _                     => ("\uE7BA", Color.FromRgb(0xC4, 0x2B, 0x1C)), // warning
+            };
+            BannerIcon.Text = glyph;
+            BannerIcon.Foreground = Brushes.White;
+            BannerIconBg.Fill = new SolidColorBrush(color);
+
+            BannerTitle.Text  = title;
+            BannerDetail.Text = detail;
+            if (outcome == ScanOutcome.Completed)
+            {
+                BannerProgress.IsIndeterminate = false;
+                BannerProgress.Value = 100;
+                BannerPercent.Text = "100%";
+            }
+            else
+            {
+                BannerProgress.Visibility = Visibility.Collapsed;
+                BannerPercent.Text = "";
+            }
+
+            StatusTotal.Text = $"{title}. {detail}";
+            Taskbar.ProgressState = outcome == ScanOutcome.Failed
+                ? System.Windows.Shell.TaskbarItemProgressState.Error
+                : System.Windows.Shell.TaskbarItemProgressState.None;
+
+            // Results stay visible for a few seconds (errors stay until dismissed), then fade out
+            if (outcome == ScanOutcome.Failed) return;
+            _bannerHideTimer?.Stop();
+            _bannerHideTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
+            _bannerHideTimer.Tick += (_, _) => { _bannerHideTimer.Stop(); HideScanBanner(); };
+            _bannerHideTimer.Start();
+        }
+
+        private void HideScanBanner()
+        {
+            if (_scanTask != null) return; // a new scan started meanwhile
+            if (!SystemParameters.ClientAreaAnimation) { ScanBanner.Visibility = Visibility.Collapsed; return; }
+            var fade = new System.Windows.Media.Animation.DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(400));
+            fade.Completed += (_, _) => { if (_scanTask == null) ScanBanner.Visibility = Visibility.Collapsed; };
+            ScanBanner.BeginAnimation(OpacityProperty, fade);
+        }
+
+        private void BannerDismiss_Click(object sender, RoutedEventArgs e)
+        {
+            _bannerHideTimer?.Stop();
+            ScanBanner.Visibility = Visibility.Collapsed;
+            Taskbar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
+        }
+
+        /// <summary>Spins the banner icon — unless Windows "Animation effects" is turned off.</summary>
+        private void SetSpinner(bool on)
+        {
+            if (BannerIcon.RenderTransform is not RotateTransform rot) return;
+            if (on && SystemParameters.ClientAreaAnimation)
+                rot.BeginAnimation(RotateTransform.AngleProperty,
+                    new System.Windows.Media.Animation.DoubleAnimation(0, 360, TimeSpan.FromSeconds(1.2))
+                    { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever });
+            else
+            {
+                rot.BeginAnimation(RotateTransform.AngleProperty, null);
+                rot.Angle = 0;
+            }
+        }
+
+        private static string FormatDuration(TimeSpan t)
+            => t.TotalHours >= 1 ? $"{(int)t.TotalHours}h {t.Minutes:00}m"
+             : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes}m {t.Seconds:00}s"
+             : $"{Math.Max(0, t.TotalSeconds):0}s";
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
             _scanCts?.Cancel();
             StatusTotal.Text = "Stopping scan…";
+            if (ScanBanner.Visibility == Visibility.Visible) BannerTitle.Text = "Stopping scan…";
         }
 
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)

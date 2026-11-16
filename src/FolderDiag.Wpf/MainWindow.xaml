@@ -499,7 +499,7 @@
                            Margin="16,0"/>
                 <ProgressBar x:Name="ScanProgress"
                              Grid.Column="2"
-                             Height="4"
+                             Height="6"
                              Minimum="0" Maximum="100" Value="0"
                              Visibility="Collapsed"
                              VerticalAlignment="Center"/>
@@ -510,6 +510,78 @@
                            VerticalAlignment="Center"
                            FontSize="{DynamicResource Fs12}"
                            Margin="16,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════
+             SCAN BANNER (shown while scanning, then shows the result briefly)
+        ═══════════════════════════════════════════ -->
+        <Border x:Name="ScanBanner" DockPanel.Dock="Top" Visibility="Collapsed"
+                Background="{DynamicResource Win11PanelBrush}"
+                BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="14,10,14,10"
+                AutomationProperties.Name="Scan progress"
+                AutomationProperties.LiveSetting="Polite">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Spinning sync icon while scanning; swapped for ✓ / ⏹ / ⚠ when done -->
+                <Grid Grid.RowSpan="3" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <Ellipse x:Name="BannerIconBg" Fill="{DynamicResource Win11SelectBrush}"/>
+                    <TextBlock x:Name="BannerIcon" Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                               Foreground="{DynamicResource Win11AccentBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <RotateTransform/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Grid>
+
+                <DockPanel Grid.Column="1" Grid.Row="0" LastChildFill="True">
+                    <TextBlock x:Name="BannerPercent" DockPanel.Dock="Right" FontWeight="SemiBold"
+                               FontSize="{DynamicResource Fs14}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="BannerTitle" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                </DockPanel>
+
+                <ProgressBar x:Name="BannerProgress" Grid.Column="1" Grid.Row="1" Height="6" Margin="0,6,0,6"
+                             Minimum="0" Maximum="100" IsIndeterminate="True"
+                             AutomationProperties.Name="Scan progress"/>
+
+                <Grid Grid.Column="1" Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="BannerDetail" Foreground="{DynamicResource Win11SubTextBrush}"
+                               FontSize="{DynamicResource Fs12}"/>
+                    <TextBlock x:Name="BannerCurrent" Grid.Column="1" Foreground="{DynamicResource Win11SubTextBrush}"
+                               FontSize="{DynamicResource Fs12}" Margin="16,0,0,0"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"/>
+                </Grid>
+
+                <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Button x:Name="BannerStop" Click="BtnStop_Click" Padding="14,6" ToolTip="Stop scanning (previous results are kept)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
+                            <TextBlock Text="Stop" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BannerDismiss" Click="BannerDismiss_Click" Padding="10,6" Visibility="Collapsed"
+                            ToolTip="Dismiss" AutomationProperties.Name="Dismiss">
+                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"/>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
