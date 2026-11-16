@@ -1987,17 +1987,25 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         }
 
         // ─── Open items: double-click / Enter, like File Explorer ─────────
-        /// <summary>The row under the mouse, ignoring clicks on headers, scrollbars and empty space.</summary>
+        /// <summary>
+        /// The row under the mouse, ignoring clicks on headers, scrollbars and empty space.
+        /// Note: Control.MouseDoubleClick reports the DataGrid itself as OriginalSource, so the
+        /// clicked element has to be found by hit-testing the mouse position.
+        /// </summary>
         private static object? RowItemUnderMouse(DataGrid grid, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton != MouseButton.Left || e.OriginalSource is not DependencyObject src) return null;
-            for (var d = src; d != null && d != grid; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            if (e.ChangedButton != MouseButton.Left) return null;
+            if (grid.InputHitTest(e.GetPosition(grid)) is not DependencyObject hit) return null;
+            for (DependencyObject? d = hit; d != null && d != grid; d = ParentOf(d))
             {
                 if (d is DataGridRow row) return row.Item;
                 if (d is System.Windows.Controls.Primitives.DataGridColumnHeader or System.Windows.Controls.Primitives.ScrollBar) return null;
             }
             return null;
         }
+
+        private static DependencyObject? ParentOf(DependencyObject d)
+            => d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
 
         private void FoldersGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
@@ -2029,7 +2037,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void Grid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is not DataGrid grid || e.OriginalSource is not DependencyObject src) return;
-            for (var d = src; d != null && d != grid; d = d is Visual ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            for (DependencyObject? d = src; d != null && d != grid; d = ParentOf(d))
                 if (d is DataGridRow row) { grid.SelectedItem = row.Item; row.Focus(); return; }
         }
 
