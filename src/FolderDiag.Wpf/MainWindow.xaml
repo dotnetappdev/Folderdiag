@@ -792,7 +792,10 @@
                             <!-- Folder Sizes DataGrid -->
                             <DataGrid x:Name="FoldersGrid"
                                       Grid.Row="1"
-                                      SelectedCellsChanged="FoldersGrid_SelectionChanged">
+                                      SelectedCellsChanged="FoldersGrid_SelectionChanged"
+                                      MouseDoubleClick="FoldersGrid_MouseDoubleClick"
+                                      PreviewKeyDown="Grid_PreviewKeyDown"
+                                      PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="Name" Width="220" SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -890,7 +893,10 @@
                             <!-- Files + Folders DataGrid -->
                             <DataGrid x:Name="FileBrowserGrid"
                                       Grid.Row="1"
-                                      SelectedCellsChanged="FileBrowserGrid_SelectionChanged">
+                                      SelectedCellsChanged="FileBrowserGrid_SelectionChanged"
+                                      MouseDoubleClick="FileBrowserGrid_MouseDoubleClick"
+                                      PreviewKeyDown="Grid_PreviewKeyDown"
+                                      PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="Name" Width="260" SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>

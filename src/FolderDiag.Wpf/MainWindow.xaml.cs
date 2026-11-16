@@ -694,6 +694,17 @@ namespace FolderDiag.Wpf
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            // Alt+Left / Alt+Right / Alt+Up (as shown in the toolbar tooltips). With Alt held,
+            // WPF reports the key in SystemKey.
+            if (Keyboard.Modifiers == ModifierKeys.Alt)
+            {
+                switch (e.SystemKey)
+                {
+                    case Key.Left:  if (BtnNavBack.IsEnabled)    BtnNavBack_Click(sender, e);    e.Handled = true; return;
+                    case Key.Right: if (BtnNavForward.IsEnabled) BtnNavForward_Click(sender, e); e.Handled = true; return;
+                    case Key.Up:    BtnNavUp_Click(sender, e); e.Handled = true; return;
+                }
+            }
             if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
             double cur = CurrentUiScale;
             switch (e.Key)
@@ -1965,12 +1976,74 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             if (FoldersGrid.SelectedItem is FolderItem f)
                 UpdateDetails(f);
         }
+        // Single click only selects (like File Explorer) so folders can be selected and right-clicked;
+        // double-click or Enter opens. (Opening on selection made that impossible.)
         private void FileBrowserGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e)
         {
-            if (FileBrowserGrid.SelectedItem is BrowserEntry be && !be.IsFolder)
-                StatusTotal.Text = $"{be.Name}  —  {FolderItem.FormatBytes(be.SizeBytes)}";
-            else if (FileBrowserGrid.SelectedItem is BrowserEntry beDir && beDir.IsFolder)
-                NavigateTo(beDir.Path);
+            if (FileBrowserGrid.SelectedItem is BrowserEntry be)
+                StatusTotal.Text = be.IsFolder
+                    ? $"{be.Name}  —  folder (double-click or Enter to open)"
+                    : $"{be.Name}  —  {FolderItem.FormatBytes(be.SizeBytes)}";
+        }
+
+        // ─── Open items: double-click / Enter, like File Explorer ─────────
+        /// <summary>The row under the mouse, ignoring clicks on headers, scrollbars and empty space.</summary>
+        private static object? RowItemUnderMouse(DataGrid grid, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left || e.OriginalSource is not DependencyObject src) return null;
+            for (var d = src; d != null && d != grid; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            {
+                if (d is DataGridRow row) return row.Item;
+                if (d is System.Windows.Controls.Primitives.DataGridColumnHeader or System.Windows.Controls.Primitives.ScrollBar) return null;
+            }
+            return null;
+        }
+
+        private void FoldersGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (RowItemUnderMouse(FoldersGrid, e) is FolderItem f) { e.Handled = true; OpenFolderItem(f); }
+        }
+
+        private void FileBrowserGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (RowItemUnderMouse(FileBrowserGrid, e) is BrowserEntry be) { e.Handled = true; OpenBrowserEntry(be); }
+        }
+
+        /// <summary>Enter opens the selected item; Backspace goes up a level (both like Explorer).</summary>
+        private void Grid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not DataGrid grid) return;
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                if (grid.SelectedItem is FolderItem f)        { OpenFolderItem(f); e.Handled = true; }
+                else if (grid.SelectedItem is BrowserEntry b) { OpenBrowserEntry(b); e.Handled = true; }
+            }
+            else if (e.Key == Key.Back && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                BtnNavUp_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>Right-click selects the row under the mouse first, so the context menu acts on it.</summary>
+        private void Grid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not DataGrid grid || e.OriginalSource is not DependencyObject src) return;
+            for (var d = src; d != null && d != grid; d = d is Visual ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+                if (d is DataGridRow row) { grid.SelectedItem = row.Item; row.Focus(); return; }
+        }
+
+        private void OpenFolderItem(FolderItem f)
+        {
+            if (Directory.Exists(f.Path)) NavigateTo(f.Path);
+            else StatusTotal.Text = $"'{f.Name}' no longer exists — it may have been moved, renamed or deleted since the last scan.";
+        }
+
+        private void OpenBrowserEntry(BrowserEntry be)
+        {
+            if (be.IsFolder) { NavigateTo(be.Path); return; }
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(be.Path) { UseShellExecute = true }); }
+            catch (Exception ex) { StatusTotal.Text = $"Cannot open '{be.Name}': {ex.Message}"; }
         }
 
         // Ribbon sort/filter
@@ -2134,15 +2207,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // Context menu — file browser
         private void CtxBrowserOpen_Click(object sender, RoutedEventArgs e)
         {
-            if (FileBrowserGrid.SelectedItem is BrowserEntry be)
-            {
-                if (be.IsFolder) NavigateTo(be.Path);
-                else
-                {
-                    try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(be.Path) { UseShellExecute = true }); }
-                    catch (Exception ex) { MessageBox.Show("Cannot open: " + ex.Message); }
-                }
-            }
+            if (FileBrowserGrid.SelectedItem is BrowserEntry be) OpenBrowserEntry(be);
         }
 
         // Context menu — file reports / search
