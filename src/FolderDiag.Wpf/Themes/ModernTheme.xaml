@@ -1,41 +1,53 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <!-- ═══════════════════════════════════════════════
-         WINDOWS 11 COLOR PALETTE
+         THEME RESOURCES
+         These are the Light defaults (used by the designer). At runtime
+         Theming/ThemeManager.cs replaces every key below in
+         Application.Resources for Light / Dark / High Contrast and the
+         Windows accent colour. Always reference them with DynamicResource.
     ═══════════════════════════════════════════════ -->
-    <Color x:Key="Win11BgColor">#F3F3F3</Color>
-    <Color x:Key="Win11PanelColor">#FFFFFF</Color>
-    <Color x:Key="Win11SidebarColor">#F0F0F0</Color>
-    <Color x:Key="Win11RibbonColor">#FAFAFA</Color>
-    <Color x:Key="Win11BorderColor">#E0E0E0</Color>
-    <Color x:Key="Win11TextColor">#1A1A1A</Color>
-    <Color x:Key="Win11SubTextColor">#666666</Color>
-    <Color x:Key="Win11AccentColor">#0078D4</Color>
-    <Color x:Key="Win11AccentHoverColor">#1084D8</Color>
-    <Color x:Key="Win11AccentPressColor">#006CC1</Color>
-    <Color x:Key="Win11SelectColor">#CCE4F7</Color>
-    <Color x:Key="Win11HoverColor">#E5E5E5</Color>
-    <Color x:Key="Win11HeaderBgColor">#F0F0F0</Color>
-    <Color x:Key="Win11StatusBarColor">#F0F0F0</Color>
-    <Color x:Key="Win11GridLineColor">#E8E8E8</Color>
+    <SolidColorBrush x:Key="Win11BgBrush"               Color="#F3F3F3" />
+    <SolidColorBrush x:Key="Win11PanelBrush"            Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Win11SidebarBrush"          Color="#F0F0F0" />
+    <SolidColorBrush x:Key="Win11RibbonBrush"           Color="#FAFAFA" />
+    <SolidColorBrush x:Key="Win11BorderBrush"           Color="#E0E0E0" />
+    <SolidColorBrush x:Key="Win11TextBrush"             Color="#1A1A1A" />
+    <SolidColorBrush x:Key="Win11SubTextBrush"          Color="#666666" />
+    <SolidColorBrush x:Key="Win11AccentBrush"           Color="#0078D4" />
+    <SolidColorBrush x:Key="Win11AccentHoverBrush"      Color="#1084D8" />
+    <SolidColorBrush x:Key="Win11AccentPressBrush"      Color="#006CC1" />
+    <SolidColorBrush x:Key="Win11AccentTextBrush"       Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Win11SelectBrush"           Color="#CCE4F7" />
+    <SolidColorBrush x:Key="Win11SelectTextBrush"       Color="#1A1A1A" />
+    <SolidColorBrush x:Key="Win11HoverBrush"            Color="#E5E5E5" />
+    <SolidColorBrush x:Key="Win11PressedBrush"          Color="#D5D5D5" />
+    <SolidColorBrush x:Key="Win11HeaderBgBrush"         Color="#F0F0F0" />
+    <SolidColorBrush x:Key="Win11StatusBarBrush"        Color="#F0F0F0" />
+    <SolidColorBrush x:Key="Win11GridLineBrush"         Color="#E8E8E8" />
+    <SolidColorBrush x:Key="Win11AltRowBrush"           Color="#F8F8F8" />
+    <SolidColorBrush x:Key="Win11InputHoverBorderBrush" Color="#AAAAAA" />
+    <SolidColorBrush x:Key="Win11ScrollThumbBrush"      Color="#BBBBBB" />
+    <SolidColorBrush x:Key="Win11PlaceholderBrush"      Color="#999999" />
+    <SolidColorBrush x:Key="Win11ChartBgBrush"          Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TransparentBrush"           Color="Transparent" />
 
-    <!-- Brushes -->
-    <SolidColorBrush x:Key="Win11BgBrush"         Color="{StaticResource Win11BgColor}" />
-    <SolidColorBrush x:Key="Win11PanelBrush"       Color="{StaticResource Win11PanelColor}" />
-    <SolidColorBrush x:Key="Win11SidebarBrush"     Color="{StaticResource Win11SidebarColor}" />
-    <SolidColorBrush x:Key="Win11RibbonBrush"      Color="{StaticResource Win11RibbonColor}" />
-    <SolidColorBrush x:Key="Win11BorderBrush"      Color="{StaticResource Win11BorderColor}" />
-    <SolidColorBrush x:Key="Win11TextBrush"        Color="{StaticResource Win11TextColor}" />
-    <SolidColorBrush x:Key="Win11SubTextBrush"     Color="{StaticResource Win11SubTextColor}" />
-    <SolidColorBrush x:Key="Win11AccentBrush"      Color="{StaticResource Win11AccentColor}" />
-    <SolidColorBrush x:Key="Win11SelectBrush"      Color="{StaticResource Win11SelectColor}" />
-    <SolidColorBrush x:Key="Win11HoverBrush"       Color="{StaticResource Win11HoverColor}" />
-    <SolidColorBrush x:Key="Win11HeaderBgBrush"    Color="{StaticResource Win11HeaderBgColor}" />
-    <SolidColorBrush x:Key="Win11StatusBarBrush"   Color="{StaticResource Win11StatusBarColor}" />
-    <SolidColorBrush x:Key="Win11GridLineBrush"    Color="{StaticResource Win11GridLineColor}" />
-    <SolidColorBrush x:Key="Win11AccentHoverBrush" Color="{StaticResource Win11AccentHoverColor}" />
-    <SolidColorBrush x:Key="TransparentBrush"      Color="Transparent" />
+    <!-- Fonts (scaled by the Font size setting and Windows "Text size") -->
+    <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Fs10">10</sys:Double>
+    <sys:Double x:Key="Fs11">11</sys:Double>
+    <sys:Double x:Key="Fs12">12</sys:Double>
+    <sys:Double x:Key="Fs13">13</sys:Double>
+    <sys:Double x:Key="Fs14">14</sys:Double>
+    <sys:Double x:Key="Fs15">15</sys:Double>
+    <sys:Double x:Key="Fs16">16</sys:Double>
+    <sys:Double x:Key="Fs20">20</sys:Double>
+    <!-- Row/control heights grow with the font so text is never clipped -->
+    <sys:Double x:Key="RowHeight">28</sys:Double>
+    <sys:Double x:Key="HeaderHeight">30</sys:Double>
+    <sys:Double x:Key="InputHeight">28</sys:Double>
 
     <!-- ═══════════════════════════════════════════════
          SCROLLBAR
@@ -55,7 +67,7 @@
                                 <Thumb>
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="#BBBBBB" CornerRadius="4" Margin="2"/>
+                                            <Border Background="{DynamicResource Win11ScrollThumbBrush}" CornerRadius="4" Margin="2"/>
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
@@ -74,18 +86,18 @@
          WINDOW
     ═══════════════════════════════════════════════ -->
     <Style TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource Win11BgBrush}" />
-        <Setter Property="FontFamily" Value="Segoe UI" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Background" Value="{DynamicResource Win11BgBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
     </Style>
 
     <!-- ═══════════════════════════════════════════════
          BUTTON — Windows 11 style
     ═══════════════════════════════════════════════ -->
     <Style x:Key="Win11ButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="10,5" />
         <Setter Property="Cursor" Value="Hand" />
@@ -104,10 +116,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#D0D0D0" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11PressedBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
@@ -120,9 +132,9 @@
 
     <!-- Accent Button (blue) -->
     <Style x:Key="Win11AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource Win11ButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource Win11AccentBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11AccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11AccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11AccentTextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -136,10 +148,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11AccentHoverBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11AccentHoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#006CC1" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11AccentPressBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
@@ -153,7 +165,7 @@
     <!-- Flat Ribbon Button (no border, hover highlight) -->
     <Style x:Key="RibbonButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="8,4" />
@@ -173,11 +185,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}" />
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#D5D5D5" />
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11PressedBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
@@ -195,12 +207,14 @@
          TEXTBOX
     ═══════════════════════════════════════════════ -->
     <Style x:Key="Win11TextBoxStyle" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,4" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Win11AccentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -214,11 +228,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Win11AccentBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}" />
                             <Setter TargetName="Bd" Property="BorderThickness" Value="1.5" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="#AAAAAA" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Win11InputHoverBorderBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -230,29 +244,128 @@
     <!-- ═══════════════════════════════════════════════
          COMBOBOX
     ═══════════════════════════════════════════════ -->
+    <Style x:Key="ComboToggleStyle" TargetType="ToggleButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="ClickMode" Value="Press"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                        <TextBlock x:Name="Chevron" Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0"
+                                   Foreground="{DynamicResource Win11SubTextBrush}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11PressedBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="6,3" />
-        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="8,3,28,3" />
+        <Setter Property="MinHeight" Value="{DynamicResource InputHeight}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4"/>
+                        <ToggleButton Style="{StaticResource ComboToggleStyle}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                        <ContentPresenter IsHitTestVisible="False" Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="Left"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+                        <TextBox x:Name="PART_EditableTextBox" Visibility="Hidden" Margin="2,0,26,0"
+                                 Background="Transparent" BorderThickness="0"
+                                 IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                        <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False"
+                               IsOpen="{TemplateBinding IsDropDownOpen}" PopupAnimation="Slide">
+                            <Border Background="{DynamicResource Win11PanelBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="1"
+                                    CornerRadius="6" Padding="3" Margin="0,2,0,0"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <ScrollViewer SnapsToDevicePixels="True">
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Win11InputHoverBorderBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11SelectBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Win11SelectTextBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ═══════════════════════════════════════════════
          TREEVIEW
     ═══════════════════════════════════════════════ -->
     <Style TargetType="TreeView">
-        <Setter Property="Background" Value="{StaticResource Win11SidebarBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11SidebarBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="Padding" Value="4" />
     </Style>
 
     <Style TargetType="TreeViewItem">
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
         <Setter Property="Padding" Value="2,3" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
@@ -277,7 +390,7 @@
                                             <Border Background="Transparent">
                                                 <TextBlock x:Name="Arrow" Text="▶" FontSize="8"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Foreground="#666666"
+                                                           Foreground="{DynamicResource Win11SubTextBrush}"
                                                            RenderTransformOrigin="0.5,0.5">
                                                     <TextBlock.RenderTransform>
                                                         <RotateTransform Angle="0"/>
@@ -311,14 +424,14 @@
                             <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11SelectBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11SelectBrush}"/>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="False"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -330,16 +443,16 @@
          DATAGRID
     ═══════════════════════════════════════════════ -->
     <Style TargetType="DataGrid">
-        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="RowBackground" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="AlternatingRowBackground" Value="#F8F8F8" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="RowBackground" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource Win11AltRowBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
-        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource Win11GridLineBrush}" />
-        <Setter Property="RowHeight" Value="28" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Win11GridLineBrush}" />
+        <Setter Property="MinRowHeight" Value="{DynamicResource RowHeight}" />
         <Setter Property="SelectionMode" Value="Single" />
         <Setter Property="SelectionUnit" Value="FullRow" />
         <Setter Property="CanUserReorderColumns" Value="True" />
@@ -351,27 +464,28 @@
     </Style>
 
     <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{StaticResource Win11HeaderBgBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11HeaderBgBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Padding" Value="8,5" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
-        <Setter Property="Height" Value="30" />
+        <Setter Property="MinHeight" Value="{DynamicResource HeaderHeight}" />
     </Style>
 
     <Style TargetType="DataGridRow">
         <Setter Property="Background" Value="Transparent" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource Win11SelectBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Win11SelectBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource Win11SelectTextBrush}" />
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True"/>
                     <Condition Property="IsSelected" Value="False"/>
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource Win11HoverBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Win11HoverBrush}" />
             </MultiTrigger>
         </Style.Triggers>
     </Style>
@@ -395,17 +509,17 @@
          TABCONTROL (main content tabs)
     ═══════════════════════════════════════════════ -->
     <Style x:Key="MainTabControl" TargetType="TabControl">
-        <Setter Property="Background" Value="{StaticResource Win11PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
         <Setter Property="Padding" Value="0" />
     </Style>
 
     <Style x:Key="MainTabItem" TargetType="TabItem">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
         <Setter Property="Padding" Value="14,6" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
@@ -423,8 +537,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Indicator" Property="BorderBrush" Value="{StaticResource Win11AccentBrush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Win11AccentBrush}"/>
+                            <Setter TargetName="Indicator" Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Win11AccentBrush}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
                         <MultiTrigger>
@@ -432,7 +546,7 @@
                                 <Condition Property="IsSelected" Value="False"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -443,9 +557,9 @@
     <!-- Ribbon Tab style (top ribbon tabs) -->
     <Style x:Key="RibbonTabItem" TargetType="TabItem">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
         <Setter Property="Padding" Value="12,5" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs12}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
@@ -460,7 +574,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11PanelBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11PanelBrush}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
                         <MultiTrigger>
@@ -468,7 +582,7 @@
                                 <Condition Property="IsSelected" Value="False"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background" Value="#ECECEC"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -480,12 +594,12 @@
          STATUS BAR
     ═══════════════════════════════════════════════ -->
     <Style TargetType="StatusBar">
-        <Setter Property="Background" Value="{StaticResource Win11StatusBarBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11StatusBarBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11SubTextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
         <Setter Property="Padding" Value="4,0" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs12}" />
     </Style>
 
     <!-- ═══════════════════════════════════════════════
@@ -493,8 +607,8 @@
     ═══════════════════════════════════════════════ -->
     <Style TargetType="ProgressBar">
         <Setter Property="Height" Value="4" />
-        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource Win11AccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11BorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11AccentBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
@@ -514,7 +628,7 @@
          SEPARATOR
     ═══════════════════════════════════════════════ -->
     <Style TargetType="Separator">
-        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="Margin" Value="4,4" />
     </Style>
 
@@ -522,11 +636,11 @@
          LISTBOX (for quick access panel)
     ═══════════════════════════════════════════════ -->
     <Style TargetType="ListBox">
-        <Setter Property="Background" Value="{StaticResource Win11SidebarBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11SidebarBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="Padding" Value="4" />
     </Style>
 
@@ -545,14 +659,14 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11SelectBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11SelectBrush}"/>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="False"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Win11HoverBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -564,7 +678,7 @@
          GRIDSPLITTER
     ═══════════════════════════════════════════════ -->
     <Style TargetType="GridSplitter">
-        <Setter Property="Background" Value="{StaticResource Win11BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Win11BorderBrush}" />
         <Setter Property="Width" Value="1" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -574,31 +688,230 @@
          CHECKBOX
     ═══════════════════════════════════════════════ -->
     <Style TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" BorderThickness="1"
+                                Background="{DynamicResource Win11PanelBrush}"
+                                BorderBrush="{DynamicResource Win11InputHoverBorderBrush}"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="Mark" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                       Foreground="{DynamicResource Win11AccentTextBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        </Border>
+                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource Win11AccentBrush}"/>
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}"/>
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Win11AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Box" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Grid Width="18" Height="18" VerticalAlignment="Center">
+                            <Ellipse x:Name="Ring" StrokeThickness="1" Fill="{DynamicResource Win11PanelBrush}"
+                                     Stroke="{DynamicResource Win11InputHoverBorderBrush}"/>
+                            <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Win11AccentTextBrush}" Visibility="Collapsed"/>
+                        </Grid>
+                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Ring" Property="Fill" Value="{DynamicResource Win11AccentBrush}"/>
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource Win11AccentBrush}"/>
+                            <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource Win11AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Ring" Property="StrokeThickness" Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         SLIDER
+    ═══════════════════════════════════════════════ -->
+    <Style x:Key="SliderThumbStyle" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid Width="20" Height="20">
+                        <Ellipse Fill="{DynamicResource Win11PanelBrush}" Stroke="{DynamicResource Win11BorderBrush}"/>
+                        <Ellipse x:Name="Inner" Width="10" Height="10" Fill="{DynamicResource Win11AccentBrush}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Inner" Property="Width" Value="12"/>
+                            <Setter TargetName="Inner" Property="Height" Value="12"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="SliderTrackButton" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="Slider">
+        <Setter Property="Foreground" Value="{DynamicResource Win11AccentBrush}"/>
+        <Setter Property="IsMoveToPointEnabled" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid MinHeight="24">
+                        <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                Background="{DynamicResource Win11InputHoverBorderBrush}"/>
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource SliderTrackButton}" Command="Slider.DecreaseLarge"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource SliderTrackButton}" Command="Slider.IncreaseLarge"/>
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource SliderThumbStyle}"/>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════
+         CONTEXT MENU / MENU ITEM / TOOLTIP
+    ═══════════════════════════════════════════════ -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}"/>
+        <Setter Property="HasDropShadow" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="4">
+                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{TemplateBinding InputGestureText}" Margin="24,0,0,0"
+                                       Foreground="{DynamicResource Win11SubTextBrush}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Win11HoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource Win11PanelBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Win11BorderBrush}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="{DynamicResource Fs12}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1" CornerRadius="4" Padding="8,5">
+                        <ContentPresenter/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ═══════════════════════════════════════════════
          LABEL / TEXTBLOCK
     ═══════════════════════════════════════════════ -->
     <Style TargetType="Label">
-        <Setter Property="Foreground" Value="{StaticResource Win11TextBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11TextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs13}" />
         <Setter Property="Padding" Value="4,2" />
     </Style>
 
     <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11SubTextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs11}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="8,8,8,4" />
         <!-- WPF TextBlock cannot auto-uppercase; write section header text in capitals -->
     </Style>
 
     <Style x:Key="RibbonGroupLabelStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource Win11SubTextBrush}" />
-        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="{DynamicResource Win11SubTextBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fs10}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="Margin" Value="0,2,0,0" />
     </Style>

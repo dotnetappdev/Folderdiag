@@ -9,8 +9,11 @@
         Height="820" Width="1300"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource Win11BgBrush}"
-        FontFamily="Segoe UI" FontSize="13">
+        Background="{DynamicResource Win11BgBrush}"
+        FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource Fs13}"
+        Foreground="{DynamicResource Win11TextBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewMouseWheel="Window_PreviewMouseWheel">
 
     <Window.Resources>
         <conv:BytesToStringConverter   x:Key="BytesToStr"/>
@@ -28,8 +31,8 @@
              RIBBON BAR (Tabs: Home | Share | View | Scan | Tools)
         ═══════════════════════════════════════════ -->
         <Border DockPanel.Dock="Top"
-                Background="{StaticResource Win11RibbonBrush}"
-                BorderBrush="{StaticResource Win11BorderBrush}"
+                Background="{DynamicResource Win11RibbonBrush}"
+                BorderBrush="{DynamicResource Win11BorderBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
 
@@ -38,9 +41,23 @@
                             VerticalAlignment="Center" Margin="10,0,0,0">
                     <TextBlock Text="📁" FontSize="20" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock Text="FolderDiag" FontWeight="SemiBold"
-                               Foreground="{StaticResource Win11TextBrush}"
-                               VerticalAlignment="Center" FontSize="14"/>
+                               Foreground="{DynamicResource Win11TextBrush}"
+                               VerticalAlignment="Center" FontSize="{DynamicResource Fs14}"/>
                 </StackPanel>
+
+                <!-- Settings (top-right, like Windows 11 apps) -->
+                <Button x:Name="BtnSettings" DockPanel.Dock="Right"
+                        Style="{StaticResource RibbonButtonStyle}"
+                        Margin="0,4,10,0" VerticalAlignment="Top"
+                        Click="BtnSettings_Click"
+                        ToolTip="Settings — theme, accent colour, UI scale, fonts (Ctrl+,)"
+                        AutomationProperties.Name="Settings">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="{DynamicResource Fs14}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Settings" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- Ribbon Tabs -->
                 <TabControl x:Name="RibbonTabCtrl"
@@ -52,13 +69,13 @@
 
                     <!-- ── HOME TAB ── -->
                     <TabItem Header="Home" Style="{StaticResource RibbonTabItem}">
-                        <Border Background="{StaticResource Win11PanelBrush}"
-                                BorderBrush="{StaticResource Win11BorderBrush}"
+                        <Border Background="{DynamicResource Win11PanelBrush}"
+                                BorderBrush="{DynamicResource Win11BorderBrush}"
                                 BorderThickness="0,1,0,0" Padding="6,4">
                             <StackPanel Orientation="Horizontal">
 
                                 <!-- Scan Group -->
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
@@ -67,7 +84,7 @@
                                                     ToolTip="Scan selected folder for sizes">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🔍" FontSize="22" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Scan" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Scan" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnStop" Click="BtnStop_Click"
@@ -76,7 +93,7 @@
                                                     ToolTip="Stop current scan">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="⏹" FontSize="22" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Stop" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Stop" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnRefresh" Click="BtnRefresh_Click"
@@ -84,7 +101,7 @@
                                                     ToolTip="Refresh current view">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🔄" FontSize="22" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Refresh" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Refresh" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -93,7 +110,7 @@
                                 </Border>
 
                                 <!-- File Operations Group -->
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
@@ -102,7 +119,7 @@
                                                     ToolTip="Copy selected item">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📋" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Copy" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Copy" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnMove" Click="BtnMove_Click"
@@ -110,7 +127,7 @@
                                                     ToolTip="Move selected item">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="✂" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Move" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Move" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnDelete" Click="BtnDelete_Click"
@@ -118,7 +135,7 @@
                                                     ToolTip="Delete selected item">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Delete" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Delete" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnZip" Click="BtnZip_Click"
@@ -126,7 +143,7 @@
                                                     ToolTip="Compress to ZIP">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🗜" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Zip" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Zip" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -135,7 +152,7 @@
                                 </Border>
 
                                 <!-- Export Group -->
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
@@ -144,7 +161,7 @@
                                                     ToolTip="Export to CSV">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="CSV" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="CSV" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnExportXml" Click="BtnExportXml_Click"
@@ -152,7 +169,7 @@
                                                     ToolTip="Export to XML">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="XML" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="XML" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnExportHtml" Click="BtnExportHtml_Click"
@@ -160,7 +177,7 @@
                                                     ToolTip="Export to HTML Report">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🌐" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="HTML" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="HTML" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -177,7 +194,7 @@
                                                     ToolTip="Save a snapshot for trend comparison">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📷" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Snapshot" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Snapshot" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnCompare" Click="BtnCompare_Click"
@@ -185,7 +202,7 @@
                                                     ToolTip="Compare two snapshots">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="⚖" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Compare" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Compare" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnSchedule" Click="BtnSchedule_Click"
@@ -193,7 +210,7 @@
                                                     ToolTip="Schedule automatic scans">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🕐" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Schedule" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Schedule" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -207,13 +224,13 @@
 
                     <!-- ── VIEW TAB ── -->
                     <TabItem Header="View" Style="{StaticResource RibbonTabItem}">
-                        <Border Background="{StaticResource Win11PanelBrush}"
-                                BorderBrush="{StaticResource Win11BorderBrush}"
+                        <Border Background="{DynamicResource Win11PanelBrush}"
+                                BorderBrush="{DynamicResource Win11BorderBrush}"
                                 BorderThickness="0,1,0,0" Padding="6,4">
                             <StackPanel Orientation="Horizontal">
 
                                 <!-- Layout Group -->
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
@@ -221,21 +238,21 @@
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Details view">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="☰" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Details" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Details" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnViewList" Click="BtnViewList_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="List view">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="▤" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="List" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="List" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnViewTiles" Click="BtnViewTiles_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Tiles view">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="⊞" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Tiles" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Tiles" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -244,7 +261,7 @@
                                 </Border>
 
                                 <!-- Show/Hide Group -->
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Margin="0,0,0,2">
@@ -268,21 +285,21 @@
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Bar chart">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📊" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Bar" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Bar" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnChartPie" Click="BtnChartPie_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Pie chart">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🥧" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Pie" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Pie" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnChartTreemap" Click="BtnChartTreemap_Click"
                                                     Style="{StaticResource RibbonButtonStyle}" ToolTip="Treemap chart">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="▦" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Treemap" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Treemap" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -296,36 +313,36 @@
 
                     <!-- ── REPORTS TAB ── -->
                     <TabItem Header="Reports" Style="{StaticResource RibbonTabItem}">
-                        <Border Background="{StaticResource Win11PanelBrush}"
-                                BorderBrush="{StaticResource Win11BorderBrush}"
+                        <Border Background="{DynamicResource Win11PanelBrush}"
+                                BorderBrush="{DynamicResource Win11BorderBrush}"
                                 BorderThickness="0,1,0,0" Padding="6,4">
                             <StackPanel Orientation="Horizontal">
-                                <Border BorderBrush="{StaticResource Win11BorderBrush}"
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
                                         BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <Button Click="BtnReportLargest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show largest files">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📦" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Largest" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Largest" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportOldest_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show oldest files">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🕰" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Oldest" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Oldest" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportTemp_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Show temporary files">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🗑" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Temp Files" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Temp Files" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnReportDuplicates_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Find duplicate files">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="👥" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Duplicates" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Duplicates" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -338,19 +355,19 @@
                                             <Button Click="BtnClassifyType_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by file type">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="🗂" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="By Type" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Type" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnClassifyAge_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by age">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="📅" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="By Age" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Age" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button Click="BtnClassifyOwner_Click" Style="{StaticResource RibbonButtonStyle}" ToolTip="Classify by owner">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="By Owner" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="By Owner" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -369,8 +386,8 @@
              COMMAND BAR (nav arrows + address bar + search)
         ═══════════════════════════════════════════ -->
         <Border DockPanel.Dock="Top"
-                Background="{StaticResource Win11PanelBrush}"
-                BorderBrush="{StaticResource Win11BorderBrush}"
+                Background="{DynamicResource Win11PanelBrush}"
+                BorderBrush="{DynamicResource Win11BorderBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="6,4">
             <DockPanel>
@@ -381,26 +398,26 @@
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             IsEnabled="False" ToolTip="Back (Alt+Left)">
-                        <TextBlock Text="←" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="←" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                     <Button x:Name="BtnNavForward" Click="BtnNavForward_Click"
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             IsEnabled="False" ToolTip="Forward (Alt+Right)">
-                        <TextBlock Text="→" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="→" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                     <Button x:Name="BtnNavUp" Click="BtnNavUp_Click"
                             Style="{StaticResource RibbonButtonStyle}"
                             Width="32" Height="32" Padding="0"
                             ToolTip="Up one level (Alt+Up)">
-                        <TextBlock Text="↑" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="↑" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
                 </StackPanel>
 
                 <!-- Search box (right side) -->
                 <Border DockPanel.Dock="Right" Width="220"
-                        Background="{StaticResource Win11BgBrush}"
-                        BorderBrush="{StaticResource Win11BorderBrush}"
+                        Background="{DynamicResource Win11BgBrush}"
+                        BorderBrush="{DynamicResource Win11BorderBrush}"
                         BorderThickness="1" CornerRadius="16" Margin="4,0,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -417,18 +434,18 @@
                                  ToolTip="Search (Ctrl+F)"/>
                         <TextBlock x:Name="SearchPlaceholder"
                                    Text="Search" IsHitTestVisible="False"
-                                   Foreground="#AAAAAA" Margin="10,0,0,0"
+                                   Foreground="{DynamicResource Win11PlaceholderBrush}" Margin="10,0,0,0"
                                    VerticalAlignment="Center"
                                    Visibility="Visible"/>
-                        <TextBlock Grid.Column="1" Text="🔍" FontSize="14"
+                        <TextBlock Grid.Column="1" Text="🔍" FontSize="{DynamicResource Fs14}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="#999999"/>
+                                   Foreground="{DynamicResource Win11PlaceholderBrush}"/>
                     </Grid>
                 </Border>
 
                 <!-- Address bar -->
-                <Border Background="{StaticResource Win11BgBrush}"
-                        BorderBrush="{StaticResource Win11BorderBrush}"
+                <Border Background="{DynamicResource Win11BgBrush}"
+                        BorderBrush="{DynamicResource Win11BorderBrush}"
                         BorderThickness="1" CornerRadius="4" Margin="4,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -438,14 +455,14 @@
                         <TextBlock Grid.Column="0" Text="📂"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   FontSize="14" Margin="2,0"/>
+                                   FontSize="{DynamicResource Fs14}" Margin="2,0"/>
                         <TextBox x:Name="TxtAddressBar"
                                  Grid.Column="1"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Padding="4,4"
                                  VerticalContentAlignment="Center"
-                                 FontSize="13"
+                                 FontSize="{DynamicResource Fs13}"
                                  KeyDown="TxtAddressBar_KeyDown"/>
                     </Grid>
                 </Border>
@@ -457,8 +474,8 @@
              STATUS BAR
         ═══════════════════════════════════════════ -->
         <Border DockPanel.Dock="Bottom"
-                Background="{StaticResource Win11StatusBarBrush}"
-                BorderBrush="{StaticResource Win11BorderBrush}"
+                Background="{DynamicResource Win11StatusBarBrush}"
+                BorderBrush="{DynamicResource Win11BorderBrush}"
                 BorderThickness="0,1,0,0">
             <Grid Margin="8,3">
                 <Grid.ColumnDefinitions>
@@ -470,15 +487,15 @@
                 <TextBlock x:Name="StatusTotal"
                            Grid.Column="0"
                            Text="Ready — select a folder to scan"
-                           Foreground="{StaticResource Win11SubTextBrush}"
+                           Foreground="{DynamicResource Win11SubTextBrush}"
                            VerticalAlignment="Center"
-                           FontSize="12"/>
+                           FontSize="{DynamicResource Fs12}"/>
                 <TextBlock x:Name="StatusFileCount"
                            Grid.Column="1"
                            Text=""
-                           Foreground="{StaticResource Win11SubTextBrush}"
+                           Foreground="{DynamicResource Win11SubTextBrush}"
                            VerticalAlignment="Center"
-                           FontSize="12"
+                           FontSize="{DynamicResource Fs12}"
                            Margin="16,0"/>
                 <ProgressBar x:Name="ScanProgress"
                              Grid.Column="2"
@@ -489,9 +506,9 @@
                 <TextBlock x:Name="StatusSize"
                            Grid.Column="3"
                            Text=""
-                           Foreground="{StaticResource Win11SubTextBrush}"
+                           Foreground="{DynamicResource Win11SubTextBrush}"
                            VerticalAlignment="Center"
-                           FontSize="12"
+                           FontSize="{DynamicResource Fs12}"
                            Margin="16,0,0,0"/>
             </Grid>
         </Border>
@@ -510,8 +527,8 @@
                  LEFT NAVIGATION PANEL (Windows 11 Explorer exact replica)
             ─────────────────────────────────────────── -->
             <Border Grid.Column="0"
-                    Background="{StaticResource Win11SidebarBrush}"
-                    BorderBrush="{StaticResource Win11BorderBrush}"
+                    Background="{DynamicResource Win11SidebarBrush}"
+                    BorderBrush="{DynamicResource Win11BorderBrush}"
                     BorderThickness="0,0,1,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="4,6,4,6">
@@ -522,9 +539,9 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                                 Padding="4,3" Cursor="Hand">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="IcoQuickAccess" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Quick access" FontWeight="SemiBold" FontSize="12"
-                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                                <TextBlock x:Name="IcoQuickAccess" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Quick access" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
+                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
                             </StackPanel>
                         </Button>
                         <StackPanel x:Name="QuickAccessSection">
@@ -543,9 +560,9 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                                 Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="IcoThisPC" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="This PC" FontWeight="SemiBold" FontSize="12"
-                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                                <TextBlock x:Name="IcoThisPC" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="This PC" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
+                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
                             </StackPanel>
                         </Button>
                         <StackPanel x:Name="ThisPCSection">
@@ -583,9 +600,9 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                                 Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="IcoNetwork" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Network" FontWeight="SemiBold" FontSize="12"
-                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                                <TextBlock x:Name="IcoNetwork" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Network" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
+                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
                             </StackPanel>
                         </Button>
                         <StackPanel x:Name="NetworkSection">
@@ -603,9 +620,9 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                                 Padding="4,3" Cursor="Hand" Margin="0,6,0,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="IcoCloud" Text="▾" Foreground="#666" FontSize="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Cloud Storage" FontWeight="SemiBold" FontSize="12"
-                                           Foreground="{StaticResource Win11SubTextBrush}"/>
+                                <TextBlock x:Name="IcoCloud" Text="▾" Foreground="#666" FontSize="{DynamicResource Fs10}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Cloud Storage" FontWeight="SemiBold" FontSize="{DynamicResource Fs12}"
+                                           Foreground="{DynamicResource Win11SubTextBrush}"/>
                             </StackPanel>
                         </Button>
                         <StackPanel x:Name="CloudSection">
@@ -625,7 +642,7 @@
             <!-- Splitter -->
             <GridSplitter Grid.Column="1"
                           Width="4"
-                          Background="{StaticResource Win11BorderBrush}"
+                          Background="{DynamicResource Win11BorderBrush}"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"/>
 
@@ -654,12 +671,12 @@
                             </Grid.RowDefinitions>
 
                             <!-- Sort/filter bar -->
-                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1"
+                            <Border Grid.Row="0" Background="{DynamicResource Win11HeaderBgBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1"
                                     Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="0,0,6,0"
-                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"/>
                                     <ComboBox x:Name="CmbSort" Width="130" Height="26"
                                               SelectionChanged="CmbSort_Changed">
                                         <ComboBoxItem Content="Size (largest first)" IsSelected="True"/>
@@ -669,7 +686,7 @@
                                         <ComboBoxItem Content="Last Modified"/>
                                     </ComboBox>
                                     <TextBlock Text="  Min size:" VerticalAlignment="Center"
-                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"/>
                                     <ComboBox x:Name="CmbMinSize" Width="100" Height="26"
                                               Margin="6,0" SelectionChanged="CmbMinSize_Changed">
                                         <ComboBoxItem Content="All sizes" IsSelected="True"/>
@@ -679,7 +696,7 @@
                                         <ComboBoxItem Content="&gt; 1 GB"/>
                                     </ComboBox>
                                     <TextBlock Text="  Depth:" VerticalAlignment="Center"
-                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"/>
                                     <ComboBox x:Name="CmbDepth" Width="90" Height="26"
                                               Margin="6,0" SelectionChanged="CmbDepth_Changed">
                                         <ComboBoxItem Content="All" IsSelected="True"/>
@@ -779,12 +796,12 @@
                             </Grid.RowDefinitions>
 
                             <!-- Breadcrumb / path bar -->
-                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                            <Border Grid.Row="0" Background="{DynamicResource Win11HeaderBgBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="BreadcrumbPath" Text="Select a folder"
-                                               Foreground="{StaticResource Win11SubTextBrush}"
-                                               VerticalAlignment="Center" FontSize="12"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"
+                                               VerticalAlignment="Center" FontSize="{DynamicResource Fs12}"/>
                                 </StackPanel>
                             </Border>
 
@@ -853,11 +870,11 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                            <Border Grid.Row="0" Background="{DynamicResource Win11HeaderBgBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Report:" VerticalAlignment="Center" Margin="0,0,6,0"
-                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"/>
                                     <ComboBox x:Name="CmbReportType" Width="180" Height="26"
                                               SelectionChanged="CmbReportType_Changed">
                                         <ComboBoxItem Content="Largest Files" IsSelected="True"/>
@@ -870,7 +887,7 @@
                                         <ComboBoxItem Content="Files by Age Bucket"/>
                                     </ComboBox>
                                     <TextBlock Text="  Top N:" VerticalAlignment="Center" Margin="8,0,4,0"
-                                               Foreground="{StaticResource Win11SubTextBrush}"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"/>
                                     <ComboBox x:Name="CmbTopN" Width="80" Height="26" SelectionChanged="CmbTopN_Changed">
                                         <ComboBoxItem Content="50" IsSelected="True"/>
                                         <ComboBoxItem Content="100"/>
@@ -889,7 +906,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}"
-                                                           FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                           FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -933,7 +950,7 @@
                                     <DataGridTemplateColumn Header="Category" Width="40">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="16" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="{DynamicResource Fs16}" HorizontalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -952,8 +969,8 @@
                             </DataGrid>
                             <GridSplitter Grid.Column="1" Width="4"/>
                             <!-- Pie chart for classification -->
-                            <Border Grid.Column="2" Background="{StaticResource Win11PanelBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="1,0,0,0">
+                            <Border Grid.Column="2" Background="{DynamicResource Win11PanelBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="1,0,0,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -961,7 +978,7 @@
                                     </Grid.RowDefinitions>
                                     <TextBlock Grid.Row="0" Text="File Type Distribution"
                                                FontWeight="SemiBold" Margin="12,10,12,6"
-                                               Foreground="{StaticResource Win11TextBrush}"/>
+                                               Foreground="{DynamicResource Win11TextBrush}"/>
                                     <Canvas x:Name="ClassifyPieCanvas" Grid.Row="1" Margin="12"/>
                                 </Grid>
                             </Border>
@@ -978,8 +995,8 @@
 
                             <!-- Search form -->
                             <Border Grid.Row="0"
-                                    Background="{StaticResource Win11HeaderBgBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}"
+                                    Background="{DynamicResource Win11HeaderBgBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}"
                                     BorderThickness="0,0,0,1" Padding="12,8">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -994,15 +1011,15 @@
                                     </Grid.RowDefinitions>
 
                                     <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,4">
-                                        <TextBlock Text="Name contains:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Name contains:" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <TextBox x:Name="SrchName" Height="26"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,8,4">
-                                        <TextBlock Text="Extension (e.g. .exe):" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Extension (e.g. .exe):" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <TextBox x:Name="SrchExt" Height="26"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,4">
-                                        <TextBlock Text="Min size:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Min size:" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <ComboBox x:Name="SrchMinSize" Height="26">
                                             <ComboBoxItem Content="Any" IsSelected="True"/>
                                             <ComboBoxItem Content="&gt; 1 MB"/>
@@ -1013,7 +1030,7 @@
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,0">
-                                        <TextBlock Text="Category:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Category:" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <ComboBox x:Name="SrchCategory" Height="26">
                                             <ComboBoxItem Content="All" IsSelected="True"/>
                                             <ComboBoxItem Content="Images"/>
@@ -1027,7 +1044,7 @@
                                         </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,8,0">
-                                        <TextBlock Text="Modified within:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Modified within:" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <ComboBox x:Name="SrchAge" Height="26">
                                             <ComboBoxItem Content="Any time" IsSelected="True"/>
                                             <ComboBoxItem Content="Today"/>
@@ -1039,7 +1056,7 @@
                                         </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,8,0">
-                                        <TextBlock Text="Owner:" FontSize="11" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Owner:" FontSize="{DynamicResource Fs11}" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,0,0,2"/>
                                         <TextBox x:Name="SrchOwner" Height="26"/>
                                     </StackPanel>
                                     <Button Grid.Column="3" Grid.Row="0" Grid.RowSpan="2"
@@ -1056,7 +1073,7 @@
                                     <DataGridTemplateColumn Header="Cat" Width="36">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="15" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Category, Converter={StaticResource ExtIcon}}" FontSize="{DynamicResource Fs15}" HorizontalAlignment="Center"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -1133,8 +1150,8 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
-                                        BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,6">
+                                <Border Grid.Row="0" Background="{DynamicResource Win11HeaderBgBrush}"
+                                        BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,6">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Compare: " VerticalAlignment="Center"/>
                                         <ComboBox x:Name="CmbSnap1" Width="160" Height="26" Margin="0,0,6,0"/>
@@ -1183,7 +1200,7 @@
                               Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
-                              Background="{StaticResource Win11BorderBrush}"/>
+                              Background="{DynamicResource Win11BorderBrush}"/>
 
                 <!-- ── BOTTOM: Chart Panel ── -->
                 <Grid Grid.Row="2">
@@ -1195,47 +1212,47 @@
 
                     <!-- Chart Canvas area -->
                     <Border Grid.Column="0"
-                            Background="{StaticResource Win11PanelBrush}"
-                            BorderBrush="{StaticResource Win11BorderBrush}"
+                            Background="{DynamicResource Win11PanelBrush}"
+                            BorderBrush="{DynamicResource Win11BorderBrush}"
                             BorderThickness="0,1,0,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Grid.Row="0" Background="{StaticResource Win11HeaderBgBrush}"
-                                    BorderBrush="{StaticResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
+                            <Border Grid.Row="0" Background="{DynamicResource Win11HeaderBgBrush}"
+                                    BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="ChartTitle" Text="Bar Chart — Folder Sizes"
                                                FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <TextBlock Text="  (click a bar to drill in)"
-                                               Foreground="{StaticResource Win11SubTextBrush}"
-                                               VerticalAlignment="Center" FontSize="11"/>
+                                               Foreground="{DynamicResource Win11SubTextBrush}"
+                                               VerticalAlignment="Center" FontSize="{DynamicResource Fs11}"/>
                                 </StackPanel>
                             </Border>
                             <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
                                           VerticalScrollBarVisibility="Auto">
-                                <Canvas x:Name="ChartCanvas" Background="White"
+                                <Canvas x:Name="ChartCanvas" Background="{DynamicResource Win11ChartBgBrush}"
                                         MinHeight="200" MinWidth="400"
                                         MouseLeftButtonDown="ChartCanvas_Click"/>
                             </ScrollViewer>
                         </Grid>
                     </Border>
 
-                    <GridSplitter Grid.Column="1" Width="4" Background="{StaticResource Win11BorderBrush}"/>
+                    <GridSplitter Grid.Column="1" Width="4" Background="{DynamicResource Win11BorderBrush}"/>
 
                     <!-- Properties / Details panel -->
                     <Border Grid.Column="2"
-                            Background="{StaticResource Win11PanelBrush}"
-                            BorderBrush="{StaticResource Win11BorderBrush}"
+                            Background="{DynamicResource Win11PanelBrush}"
+                            BorderBrush="{DynamicResource Win11BorderBrush}"
                             BorderThickness="1,1,0,0">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="DetailsPanel" Margin="12">
-                                <TextBlock Text="Details" FontWeight="SemiBold" FontSize="14"
-                                           Margin="0,0,0,10" Foreground="{StaticResource Win11TextBrush}"/>
+                                <TextBlock Text="Details" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
+                                           Margin="0,0,0,10" Foreground="{DynamicResource Win11TextBrush}"/>
 
                                 <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                <TextBlock x:Name="DetName" Text="—" FontWeight="SemiBold" FontSize="14"
+                                <TextBlock x:Name="DetName" Text="—" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
                                            TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 
                                 <Grid>
@@ -1255,41 +1272,41 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Size" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Size" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetSize" Grid.Row="0" Grid.Column="1" Text="—" TextWrapping="Wrap" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Allocated" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Allocated" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetAlloc" Grid.Row="1" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Files" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Files" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetFiles" Grid.Row="2" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Folders" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Folders" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetFolders" Grid.Row="3" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="% of Parent" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="% of Parent" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetPct" Grid.Row="4" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetModified" Grid.Row="5" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Created" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Created" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetCreated" Grid.Row="6" Grid.Column="1" Text="—" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Owner" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Owner" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
                                     <TextBlock x:Name="DetOwner" Grid.Row="7" Grid.Column="1" Text="—" TextWrapping="Wrap" Margin="0,3"/>
 
-                                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Path" Foreground="{StaticResource Win11SubTextBrush}" Margin="0,3,10,3"/>
-                                    <TextBlock x:Name="DetPath" Grid.Row="8" Grid.Column="1" Text="—" TextWrapping="Wrap" FontSize="11" Margin="0,3"/>
+                                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Path" Foreground="{DynamicResource Win11SubTextBrush}" Margin="0,3,10,3"/>
+                                    <TextBlock x:Name="DetPath" Grid.Row="8" Grid.Column="1" Text="—" TextWrapping="Wrap" FontSize="{DynamicResource Fs11}" Margin="0,3"/>
                                 </Grid>
 
                                 <!-- Size bar -->
                                 <Separator Margin="0,10"/>
-                                <TextBlock Text="Size vs. parent" Foreground="{StaticResource Win11SubTextBrush}"
-                                           FontSize="11" Margin="0,0,0,4"/>
+                                <TextBlock Text="Size vs. parent" Foreground="{DynamicResource Win11SubTextBrush}"
+                                           FontSize="{DynamicResource Fs11}" Margin="0,0,0,4"/>
                                 <Grid Height="12">
-                                    <Rectangle Fill="{StaticResource Win11BorderBrush}" RadiusX="3" RadiusY="3"/>
-                                    <Rectangle x:Name="DetSizeBar" Fill="{StaticResource Win11AccentBrush}"
+                                    <Rectangle Fill="{DynamicResource Win11BorderBrush}" RadiusX="3" RadiusY="3"/>
+                                    <Rectangle x:Name="DetSizeBar" Fill="{DynamicResource Win11AccentBrush}"
                                                RadiusX="3" RadiusY="3"
                                                HorizontalAlignment="Left" Width="0"/>
                                 </Grid>

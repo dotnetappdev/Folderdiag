@@ -50,9 +50,8 @@ namespace FolderDiag.Wpf.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             double pct = value is double d ? d : 0;
-            if (pct < 50) return new SolidColorBrush(Color.FromRgb(0x3D, 0xBE, 0x6C));
-            if (pct < 80) return new SolidColorBrush(Color.FromRgb(0xF5, 0xA6, 0x23));
-            return new SolidColorBrush(Color.FromRgb(0xE8, 0x4E, 0x4E));
+            // Colours and thresholds come from Settings › Bar colours
+            return FolderDiag.Wpf.Theming.ThemeManager.FolderBarBrush(pct);
         }
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }

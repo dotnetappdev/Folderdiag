@@ -19,6 +19,8 @@ using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using FolderDiag.Core.Models;
+using FolderDiag.Wpf.Settings;
+using FolderDiag.Wpf.Theming;
 using FolderDiag.Data;
 
 namespace FolderDiag.Wpf
@@ -109,6 +111,9 @@ namespace FolderDiag.Wpf
         public MainWindow()
         {
             InitializeComponent();
+            ThemeManager.Register(this);
+            ThemeManager.ThemeChanged += OnThemeChanged;
+            Closed += (_, _) => ThemeManager.ThemeChanged -= OnThemeChanged;
 
             // Store the database in %LocalAppData% so it is writable when installed
             // under Program Files (Inno Setup) or inside an MSIX package.
@@ -433,6 +438,57 @@ namespace FolderDiag.Wpf
             RefreshCurrentTab();
         }
 
+        // ─── Theme / settings / zoom ──────────────────────────────────────
+        private Brush Res(string key) => (Brush)FindResource(key);
+        private double Fs(int n) => (double)FindResource($"Fs{n}");
+
+        // Code-drawn visuals don't use DynamicResource, so redraw them on theme/font change
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            if (!IsLoaded) return;
+            LoadDiskSpacePanel();
+            DrawChart();
+            FoldersGrid.Items.Refresh(); // re-evaluate % bar colours
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e) => OpenSettings();
+
+        private void OpenSettings(string page = "Appearance")
+        {
+            var dlg = new SettingsWindow { Owner = this };
+            dlg.ShowPage(page);
+            dlg.ShowDialog();
+        }
+
+        private void SetUiScale(double scale)
+        {
+            var s = SettingsService.Current.Clone();
+            s.UiScale = Math.Round(Math.Clamp(scale, 0.8, 2.0), 1);
+            SettingsService.Save(s);
+            ThemeManager.Apply(SettingsService.Current);
+            StatusTotal.Text = $"UI scale {s.UiScale * 100:0}%";
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+            double cur = SettingsService.Current.UiScale;
+            switch (e.Key)
+            {
+                case Key.OemPlus: case Key.Add:        SetUiScale(cur + 0.1); e.Handled = true; break;
+                case Key.OemMinus: case Key.Subtract:  SetUiScale(cur - 0.1); e.Handled = true; break;
+                case Key.D0: case Key.NumPad0:         SetUiScale(1.0);       e.Handled = true; break;
+                case Key.OemComma:                     OpenSettings();         e.Handled = true; break;
+            }
+        }
+
+        private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+            SetUiScale(SettingsService.Current.UiScale + (e.Delta > 0 ? 0.1 : -0.1));
+            e.Handled = true;
+        }
+
         // Full path without a trailing separator — except drive roots, which keep it.
         // ("C:" on its own means "current directory on drive C", not the drive root.)
         private static string NormalizePath(string path)
@@ -483,7 +539,7 @@ namespace FolderDiag.Wpf
                 }
                 catch { }
 
-                if (_autoScanAttempted.Add(path))
+                if (SettingsService.Current.AutoScanOnNavigate && _autoScanAttempted.Add(path))
                     _ = StartScanAsync(path);
                 else if (_scanTask == null)
                     StatusTotal.Text = "Not scanned yet — click Scan to calculate folder sizes.";
@@ -572,9 +628,7 @@ namespace FolderDiag.Wpf
                 double usedPct = drive.TotalSize > 0
                     ? 100.0 * (drive.TotalSize - drive.AvailableFreeSpace) / drive.TotalSize
                     : 0;
-                var brush = usedPct < 70 ? Brushes.SteelBlue
-                          : usedPct < 85 ? Brushes.Orange
-                          : Brushes.OrangeRed;
+                var brush = ThemeManager.DiskBarBrush(usedPct); // colours chosen in Settings › Bar colours
 
                 string label = !string.IsNullOrEmpty(drive.VolumeLabel)
                     ? $"{drive.VolumeLabel} ({drive.Name.TrimEnd('\\')}) — {drive.DriveType}"
@@ -587,7 +641,8 @@ namespace FolderDiag.Wpf
                 {
                     Text       = $"💽  {label}",
                     FontWeight = FontWeights.SemiBold,
-                    FontSize   = 14,
+                    FontSize   = Fs(14),
+                    Foreground = Res("Win11TextBrush"),
                     Margin     = new Thickness(0, 0, 0, 4)
                 });
 
@@ -595,7 +650,7 @@ namespace FolderDiag.Wpf
                 var barBg = new Border
                 {
                     Height          = 18,
-                    Background      = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                    Background      = Res("Win11BorderBrush"),
                     CornerRadius    = new CornerRadius(4),
                     Margin          = new Thickness(0, 0, 0, 4)
                 };
@@ -620,23 +675,24 @@ namespace FolderDiag.Wpf
                 panel.Children.Add(new TextBlock
                 {
                     Text       = $"Used: {FolderItem.FormatBytes(used)}   Free: {FolderItem.FormatBytes(drive.AvailableFreeSpace)}   Total: {FolderItem.FormatBytes(drive.TotalSize)}   ({usedPct:F1}% used)",
-                    Foreground = (Brush)FindResource("Win11SubTextBrush"),
-                    FontSize   = 12
+                    Foreground = Res("Win11SubTextBrush"),
+                    FontSize   = Fs(12)
                 });
 
                 // Format + filesystem
                 panel.Children.Add(new TextBlock
                 {
                     Text       = $"File System: {drive.DriveFormat}",
-                    Foreground = (Brush)FindResource("Win11SubTextBrush"),
-                    FontSize   = 11,
+                    Foreground = Res("Win11SubTextBrush"),
+                    FontSize   = Fs(11),
                     Margin     = new Thickness(0, 2, 0, 0)
                 });
 
                 var border = new Border
                 {
                     Child           = panel,
-                    BorderBrush     = (Brush)FindResource("Win11BorderBrush"),
+                    BorderBrush     = Res("Win11BorderBrush"),
+                    Background      = Res("Win11PanelBrush"),
                     BorderThickness = new Thickness(1),
                     CornerRadius    = new CornerRadius(6),
                     Padding         = new Thickness(14),
@@ -894,7 +950,7 @@ namespace FolderDiag.Wpf
                     Width     = barWidth,
                     TextAlignment = TextAlignment.Center,
                     TextWrapping  = TextWrapping.NoWrap,
-                    Foreground    = Brushes.Black
+                    Foreground    = Res("Win11TextBrush")
                 };
                 Canvas.SetLeft(lbl, x);
                 Canvas.SetTop (lbl, canvasH - 28);
@@ -907,7 +963,7 @@ namespace FolderDiag.Wpf
                     FontSize  = 9,
                     Width     = barWidth + 10,
                     TextAlignment = TextAlignment.Center,
-                    Foreground    = Brushes.DimGray
+                    Foreground    = Res("Win11SubTextBrush")
                 };
                 Canvas.SetLeft(sizeLbl, x - 5);
                 Canvas.SetTop (sizeLbl, canvasH - 30 - barH - 16);
@@ -951,7 +1007,7 @@ namespace FolderDiag.Wpf
 
                 string legText = (items[i].Name.Length > 22 ? items[i].Name[..22] + "…" : items[i].Name)
                                + $"  {items[i].SizeFormatted}";
-                var legendLbl = new TextBlock { Text = legText, FontSize = 10, Foreground = Brushes.Black };
+                var legendLbl = new TextBlock { Text = legText, FontSize = 10, Foreground = Res("Win11TextBrush") };
                 Canvas.SetLeft(legendLbl, 308);
                 Canvas.SetTop (legendLbl, 19 + i * 18);
                 ChartCanvas.Children.Add(legendLbl);
@@ -963,7 +1019,7 @@ namespace FolderDiag.Wpf
             ChartCanvas.Height = 280;
         }
 
-        private static System.Windows.Shapes.Path BuildPieSlice(
+        private System.Windows.Shapes.Path BuildPieSlice(
             double cx, double cy, double r,
             double startAngle, double endAngle, Brush fill)
         {
@@ -983,7 +1039,7 @@ namespace FolderDiag.Wpf
             {
                 Data   = geo,
                 Fill   = fill,
-                Stroke = Brushes.White,
+                Stroke = Res("Win11ChartBgBrush"),
                 StrokeThickness = 1,
                 Cursor = Cursors.Hand
             };
