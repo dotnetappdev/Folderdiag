@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Globalization;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.AccessControl;
@@ -108,10 +109,8 @@ namespace FolderDiag.Wpf
 
             // Store the database in %LocalAppData% so it is writable when installed
             // under Program Files (Inno Setup) or inside an MSIX package.
-            var dataDir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FolderDiag");
-            System.IO.Directory.CreateDirectory(dataDir);
-            var dbPath = System.IO.Path.Combine(dataDir, "folderdiag.db");
+            System.IO.Directory.CreateDirectory(AppDataDir);
+            var dbPath = System.IO.Path.Combine(AppDataDir, "folderdiag.db");
 
             _dbOpts = new DbContextOptionsBuilder<FolderDiagDbContext>()
                 .UseSqlite($"Data Source={dbPath}")
@@ -384,21 +383,29 @@ namespace FolderDiag.Wpf
             }
         };
 
-        // ─── Pinned path persistence (JSON file next to exe) ──────────────
-        private string PinnedFile =>
-            System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pinned.txt");
+        // ─── Per-user app data (writable; never the install directory) ────
+        private static readonly string AppDataDir = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FolderDiag");
+
+        // ─── Pinned path persistence ──────────────────────────────────────
+        private static string PinnedFile => System.IO.Path.Combine(AppDataDir, "pinned.txt");
 
         private void LoadPinnedPaths()
         {
             _pinnedPaths.Clear();
             if (File.Exists(PinnedFile))
                 foreach (var line in File.ReadAllLines(PinnedFile))
-                    if (!string.IsNullOrWhiteSpace(line) && !_pinnedPaths.Contains(line))
+                    if (!string.IsNullOrWhiteSpace(line)
+                        && System.IO.Path.IsPathFullyQualified(line)
+                        && !_pinnedPaths.Contains(line))
                         _pinnedPaths.Add(line);
         }
 
         private void SavePinnedPaths()
-            => File.WriteAllLines(PinnedFile, _pinnedPaths);
+        {
+            Directory.CreateDirectory(AppDataDir);
+            File.WriteAllLines(PinnedFile, _pinnedPaths);
+        }
 
         // ─── Navigation ───────────────────────────────────────────────────
         private void NavigateTo(string path)
@@ -1224,7 +1231,11 @@ namespace FolderDiag.Wpf
             var sb = new StringBuilder();
             sb.AppendLine("Name,Path,Size (Bytes),Size (Human),Files,Folders,% of Parent,Last Modified,Owner");
             foreach (var f in _folderItems)
-                sb.AppendLine($"\"{f.Name}\",\"{f.Path}\",{f.SizeBytes},\"{f.SizeFormatted}\",{f.FileCount},{f.FolderCount},{f.PercentOfParent:F2},\"{f.LastModified:yyyy-MM-dd HH:mm:ss}\",\"{f.Owner}\"");
+                sb.AppendLine(string.Join(",",
+                    Csv(f.Name), Csv(f.Path), f.SizeBytes.ToString(CultureInfo.InvariantCulture), Csv(f.SizeFormatted),
+                    f.FileCount.ToString(CultureInfo.InvariantCulture), f.FolderCount.ToString(CultureInfo.InvariantCulture),
+                    f.PercentOfParent.ToString("F2", CultureInfo.InvariantCulture),
+                    Csv(f.LastModified?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)), Csv(f.Owner)));
 
             File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
             StatusTotal.Text = $"Exported CSV → {dlg.FileName}";
@@ -1269,13 +1280,13 @@ th{background:#0078d4;color:#fff;padding:10px 12px;text-align:left}
 td{padding:8px 12px;border-bottom:1px solid #e0e0e0}
 tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius:3px}
 </style></head><body>");
-            sb.Append($"<h1>FolderDiag Report</h1><p>Root: <strong>{_currentPath}</strong> — Generated: {DateTime.Now:yyyy-MM-dd HH:mm}</p>");
+            sb.Append($"<h1>FolderDiag Report</h1><p>Root: <strong>{Html(_currentPath)}</strong> — Generated: {DateTime.Now:yyyy-MM-dd HH:mm}</p>");
             sb.Append("<table><thead><tr><th>Name</th><th>Size</th><th>Bar</th><th>%</th><th>Files</th><th>Folders</th><th>Last Modified</th><th>Owner</th></tr></thead><tbody>");
 
             foreach (var f in _folderItems)
             {
                 int barW = (int)Math.Min(200, f.PercentOfParent * 2);
-                sb.Append($"<tr><td>{f.Name}</td><td>{f.SizeFormatted}</td><td><div class='bar' style='width:{barW}px'></div></td><td>{f.PercentFormatted}</td><td>{f.FileCountFormatted}</td><td>{f.FolderCountFormatted}</td><td>{f.LastModified:yyyy-MM-dd HH:mm}</td><td>{f.Owner}</td></tr>");
+                sb.Append($"<tr><td>{Html(f.Name)}</td><td>{f.SizeFormatted}</td><td><div class='bar' style='width:{barW}px'></div></td><td>{f.PercentFormatted}</td><td>{f.FileCountFormatted}</td><td>{f.FolderCountFormatted}</td><td>{f.LastModified:yyyy-MM-dd HH:mm}</td><td>{Html(f.Owner)}</td></tr>");
             }
 
             sb.Append("</tbody></table></body></html>");
@@ -1306,6 +1317,21 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
 
             string dest = System.IO.Path.Combine(dlg.SelectedPath, System.IO.Path.GetFileName(src));
+
+            // Refuse to copy/move a folder into itself (would recurse forever / corrupt data)
+            string srcFull  = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(src));
+            string destFull = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(dest));
+            if (string.Equals(srcFull, destFull, StringComparison.OrdinalIgnoreCase) ||
+                destFull.StartsWith(srcFull + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("The destination is inside the source folder.");
+                return;
+            }
+            if (Directory.Exists(dest) &&
+                MessageBox.Show($"'{dest}' already exists. Merge and overwrite existing files?", "Confirm",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
             try
             {
                 if (move) Directory.Move(src, dest);
@@ -1321,8 +1347,23 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
             foreach (var file in Directory.GetFiles(src))
                 File.Copy(file, System.IO.Path.Combine(dest, System.IO.Path.GetFileName(file)), true);
             foreach (var dir in Directory.GetDirectories(src))
+            {
+                // Don't follow junctions/symlinks: they can loop or point outside the source tree
+                if (new DirectoryInfo(dir).Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
                 CopyDirectory(dir, System.IO.Path.Combine(dest, System.IO.Path.GetFileName(dir)));
+            }
         }
+
+        // ─── Export helpers ───────────────────────────────────────────────
+        // Quotes a CSV field and neutralises spreadsheet formula injection (=, +, -, @, tab, CR).
+        private static string Csv(string? value)
+        {
+            value ??= string.Empty;
+            if (value.Length > 0 && "=+-@\t\r".Contains(value[0])) value = "'" + value;
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        private static string Html(string? value) => System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
 
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
         {

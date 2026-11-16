@@ -20,8 +20,8 @@
     <ProjectReference Include="..\FolderDiag.Data\FolderDiag.Data.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.15" />
   </ItemGroup>
   <!-- UseWindowsForms adds global usings for System.Windows.Forms / System.Drawing,
        which clash with WPF types (Application, Brush, ContextMenu, KeyEventArgs...).

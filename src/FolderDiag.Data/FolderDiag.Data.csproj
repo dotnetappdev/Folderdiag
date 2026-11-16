@@ -8,10 +8,9 @@
     <ProjectReference Include="..\FolderDiag.Core\FolderDiag.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
-    <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
+    <!-- Only SQLite is used. SQL Server / MySQL / ODBC providers were removed: they were
+         unused and pulled in vulnerable transitive packages (SqlClient, Azure.Identity, MySqlConnector). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.15" />
   </ItemGroup>
 </Project>
