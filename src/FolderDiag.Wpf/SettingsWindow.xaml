@@ -137,7 +137,13 @@
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock Text="UI scale" Style="{StaticResource CardTitle}"/>
-                            <Grid>
+                            <CheckBox x:Name="ChkWindowsScaling" Checked="AnyChanged" Unchecked="AnyChanged" Margin="0,0,0,8">
+                                <TextBlock>
+                                    <Run Text="Use Windows display scaling"/>
+                                    <Run x:Name="RunWindowsScale" Foreground="{DynamicResource Win11SubTextBrush}"/>
+                                </TextBlock>
+                            </CheckBox>
+                            <Grid x:Name="ScaleRow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="64"/>
@@ -152,13 +158,25 @@
                                 <Button Grid.Column="2" Content="Reset" Margin="12,0,0,0" Click="BtnResetScale_Click"/>
                             </Grid>
                             <TextBlock Style="{StaticResource Hint}"
-                                       Text="Zooms the whole window, like Visual Studio. Shortcuts: Ctrl + =  zoom in,  Ctrl + −  zoom out,  Ctrl + 0  reset,  Ctrl + mouse wheel."/>
+                                       Text="On: the app follows Settings › System › Display › Scale, per monitor. Off: zoom the whole window yourself, like Visual Studio — Ctrl + =  zoom in,  Ctrl + −  zoom out,  Ctrl + mouse wheel. Ctrl + 0 goes back to Windows scaling."/>
                         </StackPanel>
                     </Border>
 
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock Text="Environment font" Style="{StaticResource CardTitle}"/>
+                            <CheckBox x:Name="ChkWindowsFont" Checked="AnyChanged" Unchecked="AnyChanged" Margin="0,0,0,4">
+                                <TextBlock>
+                                    <Run Text="Use Windows font"/>
+                                    <Run x:Name="RunWindowsFont" Foreground="{DynamicResource Win11SubTextBrush}"/>
+                                </TextBlock>
+                            </CheckBox>
+                            <CheckBox x:Name="ChkWindowsFontSize" Checked="AnyChanged" Unchecked="AnyChanged" Margin="0,4,0,10">
+                                <TextBlock>
+                                    <Run Text="Use Windows font size"/>
+                                    <Run x:Name="RunWindowsTextSize" Foreground="{DynamicResource Win11SubTextBrush}"/>
+                                </TextBlock>
+                            </CheckBox>
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -179,14 +197,8 @@
                                 <ComboBox x:Name="CmbFontSize" Grid.Column="3" SelectionChanged="AnyChanged"
                                           AutomationProperties.Name="Font size"/>
                             </Grid>
-                            <CheckBox x:Name="ChkFollowTextSize" Checked="AnyChanged" Unchecked="AnyChanged">
-                                <TextBlock>
-                                    <Run Text="Also scale text with Windows Text size"/>
-                                    <Run x:Name="RunWindowsTextSize" Foreground="{DynamicResource Win11SubTextBrush}"/>
-                                </TextBlock>
-                            </CheckBox>
                             <TextBlock Style="{StaticResource Hint}"
-                                       Text="Settings › Accessibility › Text size. Changes there are picked up automatically."/>
+                                       Text="Untick a Windows option to choose your own font or size. Windows font size follows Settings › Accessibility › Text size and updates automatically."/>
                             <Border BorderBrush="{DynamicResource Win11BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10">
                                 <StackPanel>
                                     <TextBlock Text="The quick brown fox jumps over the lazy dog. 0123456789"/>

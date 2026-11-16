@@ -28,6 +28,15 @@ namespace FolderDiag.Wpf.Theming
             }
         }
 
+        /// <summary>The font Windows uses for its UI (message boxes, menus) — Segoe UI on Windows 10/11.</summary>
+        public static FontFamily UiFontFamily => SystemFonts.MessageFontFamily ?? new FontFamily("Segoe UI");
+
+        /// <summary>Settings › Display › Scale for the monitor the window is on (1.0 = 100%).</summary>
+        public static double DisplayScale(Visual v)
+        {
+            try { return VisualTreeHelper.GetDpi(v).DpiScaleX; } catch { return 1.0; }
+        }
+
         /// <summary>Settings › Accessibility › Contrast themes.</summary>
         public static bool HighContrast => SystemParameters.HighContrast;
 

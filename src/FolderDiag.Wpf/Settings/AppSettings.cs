@@ -22,10 +22,14 @@ namespace FolderDiag.Wpf.Settings
         public bool   FollowHighContrast { get; set; } = true;
 
         // ── Fonts & accessibility ─────────────────────────────────────
-        public double UiScale               { get; set; } = 1.0;   // 0.8 – 2.0
-        public string FontFamily            { get; set; } = "Segoe UI";
-        public double FontSize              { get; set; } = 13;    // base size, 9 – 24
-        public bool   FollowWindowsTextSize { get; set; } = true;
+        // Each "UseWindows…" switch makes the app follow Windows; when off, the
+        // value next to it is used instead.
+        public bool   UseWindowsScaling  { get; set; } = true;   // Settings › Display › Scale
+        public double UiScale            { get; set; } = 1.0;    // 0.8 – 2.0 (when not using Windows scaling)
+        public bool   UseWindowsFont     { get; set; } = true;   // Windows UI font
+        public string FontFamily         { get; set; } = "Segoe UI";
+        public bool   UseWindowsFontSize { get; set; } = true;   // Settings › Accessibility › Text size
+        public double FontSize           { get; set; } = 13;     // base size 9 – 24 (when not using Windows size)
 
         // ── Bar colours ───────────────────────────────────────────────
         public string DiskNormalColor     { get; set; } = AccentToken;

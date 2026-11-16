@@ -460,24 +460,29 @@ namespace FolderDiag.Wpf
             dlg.ShowDialog();
         }
 
-        private void SetUiScale(double scale)
+        // Zooming with the keyboard/wheel switches off "Use Windows scaling";
+        // Ctrl+0 switches it back on.
+        private void SetUiScale(double scale, bool useWindows = false)
         {
             var s = SettingsService.Current.Clone();
-            s.UiScale = Math.Round(Math.Clamp(scale, 0.8, 2.0), 1);
+            s.UseWindowsScaling = useWindows;
+            s.UiScale = useWindows ? 1.0 : Math.Round(Math.Clamp(scale, 0.8, 2.0), 1);
             SettingsService.Save(s);
             ThemeManager.Apply(SettingsService.Current);
-            StatusTotal.Text = $"UI scale {s.UiScale * 100:0}%";
+            StatusTotal.Text = useWindows ? "UI scale: using Windows display scaling" : $"UI scale {s.UiScale * 100:0}%";
         }
+
+        private double CurrentUiScale => ThemeManager.EffectiveUiScale(SettingsService.Current);
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
-            double cur = SettingsService.Current.UiScale;
+            double cur = CurrentUiScale;
             switch (e.Key)
             {
                 case Key.OemPlus: case Key.Add:        SetUiScale(cur + 0.1); e.Handled = true; break;
                 case Key.OemMinus: case Key.Subtract:  SetUiScale(cur - 0.1); e.Handled = true; break;
-                case Key.D0: case Key.NumPad0:         SetUiScale(1.0);       e.Handled = true; break;
+                case Key.D0: case Key.NumPad0:         SetUiScale(1.0, useWindows: true); e.Handled = true; break;
                 case Key.OemComma:                     OpenSettings();         e.Handled = true; break;
             }
         }
@@ -485,7 +490,7 @@ namespace FolderDiag.Wpf
         private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
-            SetUiScale(SettingsService.Current.UiScale + (e.Delta > 0 ? 0.1 : -0.1));
+            SetUiScale(CurrentUiScale + (e.Delta > 0 ? 0.1 : -0.1));
             e.Handled = true;
         }
 

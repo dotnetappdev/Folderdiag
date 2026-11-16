@@ -61,12 +61,14 @@ namespace FolderDiag.Wpf
             AccentPicker.SelectedColor = s.AccentColor;
             ChkHighContrast.IsChecked  = s.FollowHighContrast;
 
+            ChkWindowsScaling.IsChecked  = s.UseWindowsScaling;
+            ChkWindowsFont.IsChecked     = s.UseWindowsFont;
+            ChkWindowsFontSize.IsChecked = s.UseWindowsFontSize;
             SldScale.Value = Math.Round(s.UiScale * 100);
             CmbFont.SelectedItem = ((List<string>)CmbFont.ItemsSource)
                 .FirstOrDefault(n => n.Equals(s.FontFamily, StringComparison.OrdinalIgnoreCase)) ?? "Segoe UI";
             int sizeIdx = Array.IndexOf(FontSizes, Math.Round(s.FontSize));
             CmbFontSize.SelectedIndex = sizeIdx >= 0 ? sizeIdx : Array.IndexOf(FontSizes, 13.0);
-            ChkFollowTextSize.IsChecked = s.FollowWindowsTextSize;
 
             DiskNormalPicker.SelectedColor = s.DiskNormalColor;
             DiskWarnPicker.SelectedColor   = s.DiskWarningColor;
@@ -97,10 +99,12 @@ namespace FolderDiag.Wpf
             s.AccentColor        = AccentPicker.SelectedColor;
             s.FollowHighContrast = ChkHighContrast.IsChecked == true;
 
+            s.UseWindowsScaling  = ChkWindowsScaling.IsChecked == true;
+            s.UseWindowsFont     = ChkWindowsFont.IsChecked == true;
+            s.UseWindowsFontSize = ChkWindowsFontSize.IsChecked == true;
             s.UiScale = SldScale.Value / 100.0;
             if (CmbFont.SelectedItem is string font) s.FontFamily = font;
             if (CmbFontSize.SelectedIndex >= 0) s.FontSize = FontSizes[CmbFontSize.SelectedIndex];
-            s.FollowWindowsTextSize = ChkFollowTextSize.IsChecked == true;
 
             s.DiskNormalColor   = DiskNormalPicker.SelectedColor;
             s.DiskWarningColor  = DiskWarnPicker.SelectedColor;
@@ -154,7 +158,14 @@ namespace FolderDiag.Wpf
                 : "No Windows contrast theme is on (Settings › Accessibility › Contrast themes).";
 
             TxtScale.Text = $"{SldScale.Value:0}%";
-            RunWindowsTextSize.Text = $"  (currently {WindowsTheme.TextScaleFactor * 100:0}%)";
+            RunWindowsScale.Text    = $"  (currently {WindowsTheme.DisplayScale(this) * 100:0}%)";
+            RunWindowsFont.Text     = $"  ({WindowsTheme.UiFontFamily.Source})";
+            RunWindowsTextSize.Text = $"  (Text size {WindowsTheme.TextScaleFactor * 100:0}%)";
+
+            // Manual controls only apply when the matching Windows option is off
+            ScaleRow.IsEnabled    = ChkWindowsScaling.IsChecked != true;
+            CmbFont.IsEnabled     = ChkWindowsFont.IsChecked != true;
+            CmbFontSize.IsEnabled = ChkWindowsFontSize.IsChecked != true;
 
             LblDiskNormal.Text = $"Normal — below {s.DiskWarningPercent}% used";
             LblDiskWarn.Text   = $"Warning — from {s.DiskWarningPercent}%";
@@ -221,7 +232,11 @@ namespace FolderDiag.Wpf
         }
 
         // ── Buttons ───────────────────────────────────────────────────
-        private void BtnResetScale_Click(object sender, RoutedEventArgs e) => SldScale.Value = 100;
+        private void BtnResetScale_Click(object sender, RoutedEventArgs e)
+        {
+            SldScale.Value = 100;
+            ChkWindowsScaling.IsChecked = true;
+        }
 
         private void BtnResetAll_Click(object sender, RoutedEventArgs e)
         {

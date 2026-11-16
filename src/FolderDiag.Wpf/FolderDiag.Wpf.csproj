@@ -8,6 +8,11 @@
     <Nullable>enable</Nullable>
     <!-- Lets the project restore/build on non-Windows CI agents too -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Per-monitor DPI awareness so "Use Windows display scaling" is exact on every monitor -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WFO0003 is a WinForms-app analyzer; this is a WPF app (WinForms only for dialogs),
+         and the manifest is the correct place for WPF DPI awareness. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
 
     <!-- Product metadata (Version is overridden by CI with -p:Version=x.y.z) -->
     <Product>FolderDiag</Product>

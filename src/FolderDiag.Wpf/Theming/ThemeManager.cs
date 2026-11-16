@@ -86,14 +86,25 @@ namespace FolderDiag.Wpf.Theming
             WindowsTheme.SetTitleBarDark(w, IsDark && !IsHighContrast);
             if (w.Content is FrameworkElement root)
             {
-                double s = _settings.UiScale;
+                // Windows display scaling is applied by WPF itself (per-monitor DPI aware),
+                // so "Use Windows scaling" means no extra zoom on top.
+                double s = EffectiveUiScale(_settings);
                 root.LayoutTransform = Math.Abs(s - 1.0) < 0.001 ? Transform.Identity : new ScaleTransform(s, s);
             }
         }
 
         // ── Fonts ─────────────────────────────────────────────────────
+        public static double EffectiveUiScale(AppSettings s) => s.UseWindowsScaling ? 1.0 : s.UiScale;
+
+        /// <summary>13 px is the app's 100% size; Windows Text size scales it up to 225%.</summary>
         public static double EffectiveFontScale(AppSettings s)
-            => s.FontSize / 13.0 * (s.FollowWindowsTextSize ? WindowsTheme.TextScaleFactor : 1.0);
+            => s.UseWindowsFontSize ? WindowsTheme.TextScaleFactor : s.FontSize / 13.0;
+
+        public static FontFamily EffectiveFontFamily(AppSettings s)
+        {
+            if (s.UseWindowsFont) return WindowsTheme.UiFontFamily;
+            try { return new FontFamily(s.FontFamily); } catch { return new FontFamily("Segoe UI"); }
+        }
 
         private static void ApplyFonts(ResourceDictionary res, AppSettings s)
         {
@@ -105,8 +116,7 @@ namespace FolderDiag.Wpf.Theming
             res["HeaderHeight"] = Math.Max(30, Math.Round(30 * f));
             res["InputHeight"]  = Math.Max(28, Math.Round(28 * f));
 
-            try { res["AppFontFamily"] = new FontFamily(s.FontFamily); }
-            catch { res["AppFontFamily"] = new FontFamily("Segoe UI"); }
+            res["AppFontFamily"] = EffectiveFontFamily(s);
         }
 
         // ── Accent ────────────────────────────────────────────────────
