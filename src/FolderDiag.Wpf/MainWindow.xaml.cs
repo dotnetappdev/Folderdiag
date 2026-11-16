@@ -1501,6 +1501,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         // Live search filter
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (!IsLoaded) return;
             string term = TxtSearch.Text.Trim().ToLowerInvariant();
             SearchPlaceholder.Visibility = string.IsNullOrEmpty(TxtSearch.Text) ? Visibility.Visible : Visibility.Collapsed;
             if (string.IsNullOrEmpty(term)) { LoadFolderSizes(_currentPath); return; }
@@ -1560,14 +1561,17 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         }
 
         // Ribbon sort/filter
-        private void CmbSort_Changed(object sender, SelectionChangedEventArgs e)          => LoadFolderSizes(_currentPath);
-        private void CmbMinSize_Changed(object sender, SelectionChangedEventArgs e)        => LoadFolderSizes(_currentPath);
-        private void CmbDepth_Changed(object sender, SelectionChangedEventArgs e)          => LoadFolderSizes(_currentPath);
+        // NOTE: these handlers also fire during InitializeComponent() when XAML sets
+        // IsChecked="True" / IsSelected="True" — before later controls (e.g. BreadcrumbPath)
+        // or _dbOpts exist. Ignore them until the window has loaded.
+        private void CmbSort_Changed(object sender, SelectionChangedEventArgs e)    { if (IsLoaded) LoadFolderSizes(_currentPath); }
+        private void CmbMinSize_Changed(object sender, SelectionChangedEventArgs e) { if (IsLoaded) LoadFolderSizes(_currentPath); }
+        private void CmbDepth_Changed(object sender, SelectionChangedEventArgs e)   { if (IsLoaded) LoadFolderSizes(_currentPath); }
 
         // View options
-        private void ChkShowHidden_Changed(object sender, RoutedEventArgs e)   => LoadFileBrowser(_currentPath);
-        private void ChkShowSystem_Changed(object sender, RoutedEventArgs e)   => LoadFileBrowser(_currentPath);
-        private void ChkShowExtensions_Changed(object sender, RoutedEventArgs e) => LoadFileBrowser(_currentPath);
+        private void ChkShowHidden_Changed(object sender, RoutedEventArgs e)     { if (IsLoaded) LoadFileBrowser(_currentPath); }
+        private void ChkShowSystem_Changed(object sender, RoutedEventArgs e)     { if (IsLoaded) LoadFileBrowser(_currentPath); }
+        private void ChkShowExtensions_Changed(object sender, RoutedEventArgs e) { if (IsLoaded) LoadFileBrowser(_currentPath); }
 
         // View layout buttons (placeholder — tiles view would use WrapPanel)
         private void BtnViewDetails_Click(object sender, RoutedEventArgs e) { /* already default */ }
