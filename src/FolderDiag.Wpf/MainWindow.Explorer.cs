@@ -188,7 +188,7 @@ namespace FolderDiag.Wpf
                 view.CustomSort = new ParentFirstComparer(member, dir == System.ComponentModel.ListSortDirection.Descending);
         }
 
-        /// <summary>Keeps ".." first, then compares a property: numbers/dates by value, text like Explorer.</summary>
+        /// <summary>Keeps ".." first, then folders before files, then compares a property: numbers/dates by value, text like Explorer.</summary>
         private sealed class ParentFirstComparer : System.Collections.IComparer
         {
             private readonly string _member;
@@ -198,8 +198,11 @@ namespace FolderDiag.Wpf
 
             public int Compare(object? x, object? y)
             {
-                bool px = EntryOf(x) is { IsParentLink: true }, py = EntryOf(y) is { IsParentLink: true };
+                Entry? ex = EntryOf(x), ey = EntryOf(y);
+                bool px = ex is { IsParentLink: true }, py = ey is { IsParentLink: true };
                 if (px || py) return px == py ? 0 : px ? -1 : 1;   // ".." always on top, either direction
+                bool fx = ex is { IsFolder: true }, fy = ey is { IsFolder: true };
+                if (fx != fy) return fx ? -1 : 1;                  // folders before files, either direction
 
                 _prop ??= x?.GetType().GetProperty(_member);
                 object? a = _prop?.GetValue(x), b = _prop?.GetValue(y);

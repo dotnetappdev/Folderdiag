@@ -855,12 +855,12 @@ namespace FolderDiag.Wpf
             foreach (var i in items)
                 i.PercentOfParent = total > 0 && i.IsScanned ? 100.0 * i.SizeBytes / total : 0;
 
-            // Biggest first; not-yet-scanned folders after scanned ones, then by name
-            // ".." first (except at the top of a drive), then biggest first; not-yet-scanned
-            // folders after scanned ones, then by name
+            // ".." first (except at the top of a drive), then folders before files (like
+            // Explorer), then biggest first; not-yet-scanned folders after scanned ones, then by name
             if (ParentLinkFor(path) is string parent)
                 _folderItems.Add(new FolderItem { Path = parent, Name = "..", IsParentLink = true, IsScanned = false });
-            foreach (var i in items.OrderByDescending(i => i.IsScanned)
+            foreach (var i in items.OrderBy(i => i.IsFile)
+                                   .ThenByDescending(i => i.IsScanned)
                                    .ThenByDescending(i => i.SizeBytes)
                                    .ThenBy(i => i.Name, ShellIcons.LogicalComparer))
                 _folderItems.Add(i);
@@ -901,8 +901,8 @@ namespace FolderDiag.Wpf
 
             try
             {
-                // Subdirectories
-                foreach (var dir in Directory.GetDirectories(path))
+                // Subdirectories first, in Explorer's name order
+                foreach (var dir in Directory.GetDirectories(path).OrderBy(d => System.IO.Path.GetFileName(d), ShellIcons.LogicalComparer))
                 {
                     var di = new DirectoryInfo(dir);
                     if (!showHidden && (di.Attributes & FileAttributes.Hidden) != 0) continue;
@@ -921,7 +921,7 @@ namespace FolderDiag.Wpf
                 }
 
                 // Files
-                foreach (var file in Directory.GetFiles(path))
+                foreach (var file in Directory.GetFiles(path).OrderBy(f => System.IO.Path.GetFileName(f), ShellIcons.LogicalComparer))
                 {
                     var fi = new FileInfo(file);
                     if (!showHidden && (fi.Attributes & FileAttributes.Hidden) != 0) continue;
