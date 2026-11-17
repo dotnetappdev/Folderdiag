@@ -33,6 +33,74 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
         </Style>
+
+        <!-- ── List / Tiles / Icons views for Folder Sizes and the file browser ── -->
+        <ItemsPanelTemplate x:Key="ViewColumnsPanel"><WrapPanel Orientation="Vertical"/></ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="ViewRowsPanel"><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+        <Style x:Key="ViewSubText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Win11SubTextBrush}"/>
+            <Setter Property="FontSize" Value="{DynamicResource Fs11}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="BigIcon" TargetType="Image">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        </Style>
+
+        <!-- Folder Sizes (FolderItem) -->
+        <DataTemplate x:Key="FolderListTemplate">
+            <StackPanel Orientation="Horizontal" Width="240">
+                <Image Source="{Binding Converter={StaticResource ShellIcon}}" Style="{StaticResource RowIcon}"/>
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FolderTilesTemplate">
+            <DockPanel Width="250" Margin="2">
+                <Image DockPanel.Dock="Left" Source="{Binding Converter={StaticResource ShellIcon}}"
+                       Style="{StaticResource BigIcon}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding SizeFormatted}" Style="{StaticResource ViewSubText}"/>
+                    <TextBlock Text="{Binding PercentFormatted}" Style="{StaticResource ViewSubText}"/>
+                </StackPanel>
+            </DockPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="FolderIconsTemplate">
+            <StackPanel Width="96" Margin="2,4">
+                <Image Source="{Binding Converter={StaticResource ShellIcon}}" Width="48" Height="48"
+                       RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis" MaxHeight="34" Margin="0,4,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- File browser (BrowserEntry) -->
+        <DataTemplate x:Key="BrowserListTemplate">
+            <StackPanel Orientation="Horizontal" Width="240">
+                <Image Source="{Binding IconImage}" Style="{StaticResource RowIcon}"/>
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="BrowserTilesTemplate">
+            <DockPanel Width="250" Margin="2">
+                <Image DockPanel.Dock="Left" Source="{Binding IconImage}"
+                       Style="{StaticResource BigIcon}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding TypeText}" Style="{StaticResource ViewSubText}"/>
+                    <TextBlock Text="{Binding SizeText}" Style="{StaticResource ViewSubText}"/>
+                </StackPanel>
+            </DockPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="BrowserIconsTemplate">
+            <StackPanel Width="96" Margin="2,4">
+                <Image Source="{Binding IconImage}" Width="48" Height="48"
+                       RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis" MaxHeight="34" Margin="0,4,0,0"/>
+            </StackPanel>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
@@ -265,8 +333,31 @@
                                                     <TextBlock Text="Tiles" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
+                                            <Button x:Name="BtnViewIcons" Click="BtnViewIcons_Click"
+                                                    Style="{StaticResource RibbonButtonStyle}" ToolTip="Large icons view">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="&#xE8A9;" Style="{StaticResource RibbonIcon}" Foreground="{DynamicResource IconTeal}"/>
+                                                    <TextBlock Text="Icons" FontSize="{DynamicResource Fs11}" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
                                         </StackPanel>
                                         <TextBlock Text="Layout" Style="{StaticResource RibbonGroupLabelStyle}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Panes Group -->
+                                <Border BorderBrush="{DynamicResource Win11BorderBrush}"
+                                        BorderThickness="0,0,1,0" Padding="0,0,8,0" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <StackPanel Margin="0,0,0,2">
+                                            <CheckBox x:Name="ChkShowChart" Content="Chart" IsChecked="True"
+                                                      ToolTip="Show or hide the chart under the list"
+                                                      Checked="ChkPanes_Changed" Unchecked="ChkPanes_Changed"/>
+                                            <CheckBox x:Name="ChkShowDetailsPane" Content="Details pane" IsChecked="True"
+                                                      ToolTip="Show or hide the details pane on the right (Alt+Shift+P)"
+                                                      Checked="ChkPanes_Changed" Unchecked="ChkPanes_Changed"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Panes" Style="{StaticResource RibbonGroupLabelStyle}"/>
                                     </StackPanel>
                                 </Border>
 
@@ -732,11 +823,18 @@
             <!-- ───────────────────────────────────────
                  RIGHT CONTENT AREA
             ─────────────────────────────────────────── -->
+            <!-- Details pane is a full-height column on the right and the chart a row under the
+                 list, so hiding either one gives the list that space (width / height) back. -->
             <Grid Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition x:Name="DetailsSplitterCol" Width="4"/>
+                    <ColumnDefinition x:Name="DetailsCol" Width="260" MinWidth="160" MaxWidth="520"/>
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="240" MinHeight="120" MaxHeight="480"/>
+                    <RowDefinition x:Name="ChartSplitterRow" Height="4"/>
+                    <RowDefinition x:Name="ChartRow" Height="240" MinHeight="120" MaxHeight="480"/>
                 </Grid.RowDefinitions>
 
                 <!-- ── TOP: Main Content Tabs ── -->
@@ -875,6 +973,21 @@
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
                             </DataGrid>
+
+                            <!-- List / Tiles / Icons views (Details uses the grid above). Same items,
+                                 sort order and selection as the grid; layout set in code. -->
+                            <ListBox x:Name="FoldersList"
+                                     Grid.Row="1"
+                                     Visibility="Collapsed"
+                                     Background="{DynamicResource Win11PanelBrush}"
+                                     SelectionMode="Single"
+                                     SelectionChanged="ViewList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
+                                     PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
+                                     MouseMove="Grid_MouseMove"
+                                     PreviewKeyDown="Grid_PreviewKeyDown"
+                                     PreviewTextInput="Grid_PreviewTextInput"
+                                     PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown"/>
                         </Grid>
                     </TabItem>
 
@@ -951,6 +1064,21 @@
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
                             </DataGrid>
+
+                            <!-- List / Tiles / Icons views (Details uses the grid above). Same items,
+                                 sort order and selection as the grid; layout set in code. -->
+                            <ListBox x:Name="FileBrowserList"
+                                     Grid.Row="1"
+                                     Visibility="Collapsed"
+                                     Background="{DynamicResource Win11PanelBrush}"
+                                     SelectionMode="Single"
+                                     SelectionChanged="ViewList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="Grid_PreviewMouseLeftButtonDown"
+                                     PreviewMouseLeftButtonUp="Grid_PreviewMouseLeftButtonUp"
+                                     MouseMove="Grid_MouseMove"
+                                     PreviewKeyDown="Grid_PreviewKeyDown"
+                                     PreviewTextInput="Grid_PreviewTextInput"
+                                     PreviewMouseRightButtonDown="Grid_PreviewMouseRightButtonDown"/>
                         </Grid>
                     </TabItem>
 
@@ -1295,23 +1423,17 @@
 
                 </TabControl>
 
-                <!-- Splitter between top and bottom panels -->
-                <GridSplitter Grid.Row="1"
-                              Height="4"
+                <!-- Splitter between the list and the chart -->
+                <GridSplitter x:Name="ChartSplitter"
+                              Grid.Row="1" Grid.Column="0"
+                              Width="Auto" Height="4"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
+                              ResizeDirection="Rows"
                               Background="{DynamicResource Win11BorderBrush}"/>
 
-                <!-- ── BOTTOM: Chart Panel ── -->
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="4"/>
-                        <ColumnDefinition Width="260"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Chart Canvas area -->
-                    <Border Grid.Column="0"
+                    <!-- ── BOTTOM: Chart Canvas area ── -->
+                    <Border x:Name="ChartPane" Grid.Row="2" Grid.Column="0"
                             Background="{DynamicResource Win11PanelBrush}"
                             BorderBrush="{DynamicResource Win11BorderBrush}"
                             BorderThickness="0,1,0,0">
@@ -1339,13 +1461,17 @@
                         </Grid>
                     </Border>
 
-                    <GridSplitter Grid.Column="1" Width="4" Background="{DynamicResource Win11BorderBrush}"/>
+                    <!-- Splitter between the list/chart and the details pane -->
+                    <GridSplitter x:Name="DetailsSplitter" Grid.Column="1" Grid.RowSpan="3" Width="4"
+                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                  ResizeDirection="Columns"
+                                  Background="{DynamicResource Win11BorderBrush}"/>
 
-                    <!-- Properties / Details panel -->
-                    <Border Grid.Column="2"
+                    <!-- ── RIGHT: Properties / Details pane (full height) ── -->
+                    <Border x:Name="DetailsPane" Grid.Column="2" Grid.RowSpan="3"
                             Background="{DynamicResource Win11PanelBrush}"
                             BorderBrush="{DynamicResource Win11BorderBrush}"
-                            BorderThickness="1,1,0,0">
+                            BorderThickness="1,0,0,0">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="DetailsPanel" Margin="12">
                                 <TextBlock Text="Details" FontWeight="SemiBold" FontSize="{DynamicResource Fs14}"
@@ -1414,7 +1540,6 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                </Grid>
 
             </Grid>
         </Grid>

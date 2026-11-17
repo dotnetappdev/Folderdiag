@@ -42,6 +42,9 @@ namespace FolderDiag.Wpf
         public bool   IsParentLink { get; set; }
         /// <summary>Like Explorer: folders show no size.</summary>
         public string SizeText   => IsFolder || IsParentLink ? "" : FolderItem.FormatBytes(SizeBytes);
+        /// <summary>Type line for the Tiles view, e.g. "File folder" or "PDF file".</summary>
+        public string TypeText   => IsParentLink ? "" : IsFolder ? "File folder"
+                                  : string.IsNullOrEmpty(Extension) ? "File" : Extension.TrimStart('.').ToUpperInvariant() + " file";
         public string Icon       => IsFolder ? "📁" : GetFileIcon(Extension);
         /// <summary>The Windows shell icon (same as File Explorer).</summary>
         public ImageSource? IconImage => IsParentLink ? FolderDiag.Wpf.Theming.ShellIcons.Folder
@@ -144,6 +147,7 @@ namespace FolderDiag.Wpf
 
             EnsureDb();
             BindGrids();
+            InitLayoutViews();
             LoadNavigationPane();
             LoadQuickAccess();
             LoadSnapshots();
@@ -2130,14 +2134,16 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         }
 
         // Grid selections
-        private void FoldersGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e)
+        private void FoldersGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e) => OnFolderSelected();
+        private void OnFolderSelected()
         {
             if (FoldersGrid.SelectedItem is FolderItem { IsParentLink: false } f)
                 UpdateDetails(f);
         }
         // Single click only selects (like File Explorer) so folders can be selected and right-clicked;
         // double-click or Enter opens. (Opening on selection made that impossible.)
-        private void FileBrowserGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e)
+        private void FileBrowserGrid_SelectionChanged(object sender, SelectedCellsChangedEventArgs e) => OnBrowserSelected();
+        private void OnBrowserSelected()
         {
             if (FileBrowserGrid.SelectedItem is BrowserEntry be)
                 StatusTotal.Text = be.IsFolder
@@ -2147,11 +2153,12 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
 
         // ─── Open items: double-click / Enter, like File Explorer ─────────
         /// <summary>The data item of the row containing <paramref name="start"/>; null for headers, scrollbars, empty space.</summary>
-        private static object? RowItemFrom(DataGrid grid, DependencyObject? start)
+        private static object? RowItemFrom(ItemsControl grid, DependencyObject? start)
         {
             for (DependencyObject? d = start; d != null && d != grid; d = ParentOf(d))
             {
                 if (d is DataGridRow row) return row.Item;
+                if (d is ListBoxItem li) return grid.ItemContainerGenerator.ItemFromContainer(li);
                 if (d is System.Windows.Controls.Primitives.DataGridColumnHeader or System.Windows.Controls.Primitives.ScrollBar) return null;
             }
             return null;
@@ -2168,9 +2175,12 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         /// <summary>Right-click selects the row under the mouse first, so the context menu acts on it.</summary>
         private void Grid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not DataGrid grid || e.OriginalSource is not DependencyObject src) return;
+            if (sender is not System.Windows.Controls.Primitives.Selector grid || e.OriginalSource is not DependencyObject src) return;
             for (DependencyObject? d = src; d != null && d != grid; d = ParentOf(d))
+            {
                 if (d is DataGridRow row) { grid.SelectedItem = row.Item; row.Focus(); return; }
+                if (d is ListBoxItem li) { grid.SelectedItem = grid.ItemContainerGenerator.ItemFromContainer(li); li.Focus(); return; }
+            }
         }
 
         private void OpenFolderItem(FolderItem f)
@@ -2207,10 +2217,7 @@ tr:hover td{background:#cce4f7}.bar{height:12px;background:#0078d4;border-radius
         private void ChkShowSystem_Changed(object sender, RoutedEventArgs e)     { if (IsLoaded) LoadFileBrowser(_currentPath); }
         private void ChkShowExtensions_Changed(object sender, RoutedEventArgs e) { if (IsLoaded) LoadFileBrowser(_currentPath); }
 
-        // View layout buttons (placeholder — tiles view would use WrapPanel)
-        private void BtnViewDetails_Click(object sender, RoutedEventArgs e) { /* already default */ }
-        private void BtnViewList_Click(object sender, RoutedEventArgs e)    { /* TODO: switch to list */ }
-        private void BtnViewTiles_Click(object sender, RoutedEventArgs e)   { /* TODO: switch to tiles */ }
+        // View layout buttons and panes: see MainWindow.Layout.cs
 
         // Chart type buttons
         private void BtnChartBar_Click(object sender, RoutedEventArgs e)     { _chartType = ChartType.Bar;     DrawChart(); ChartTitle.Text = "Bar Chart — Folder Sizes"; }

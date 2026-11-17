@@ -49,6 +49,11 @@ namespace FolderDiag.Wpf.Settings
         public bool ParallelScanning   { get; set; } = true;   // read several folders at once (SSD/NVMe)
         public bool ReadOwners         { get; set; } = true;   // needed for "Files by Owner" / owner search
 
+        // ── Layout (View tab) ─────────────────────────────────────────
+        public bool   ShowChartPane   { get; set; } = true;
+        public bool   ShowDetailsPane { get; set; } = true;
+        public string ItemsView       { get; set; } = "Details";   // Details | List | Tiles | Icons
+
         public AppSettings Clone()
             => JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(this)) ?? new AppSettings();
 

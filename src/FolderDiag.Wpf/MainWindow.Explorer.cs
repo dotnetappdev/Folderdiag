@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -35,12 +36,19 @@ namespace FolderDiag.Wpf
         /// <summary>The selected item, unless it's the ".." row (which can be opened but not renamed, deleted or copied).</summary>
         private static Entry? EditableEntryOf(object? item) => EntryOf(item) is Entry { IsParentLink: false } e ? e : null;
 
-        private DataGrid? ActiveGrid => MainTabCtrl.SelectedIndex switch
+        /// <summary>The list showing the current folder: the grid in Details view, otherwise the List/Tiles/Icons list.</summary>
+        private Selector? ActiveGrid => MainTabCtrl.SelectedIndex switch
         {
-            0 => FoldersGrid,
-            1 => FileBrowserGrid,
+            0 => _itemsView == ItemsView.Details ? FoldersGrid : FoldersList,
+            1 => _itemsView == ItemsView.Details ? FileBrowserGrid : FileBrowserList,
             _ => null,
         };
+
+        private static void ScrollItemIntoView(Selector list, object item)
+        {
+            if (list is DataGrid dg) dg.ScrollIntoView(item);
+            else if (list is ListBox lb) lb.ScrollIntoView(item);
+        }
 
         private void OpenEntry(Entry e)
         {
@@ -60,7 +68,7 @@ namespace FolderDiag.Wpf
 
         private void Grid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not DataGrid grid) return;
+            if (sender is not Selector grid) return;
             object? item = RowItemFrom(grid, e.OriginalSource as DependencyObject)
                         ?? RowItemFrom(grid, grid.InputHitTest(e.GetPosition(grid)) as DependencyObject);
             _pressedItem = item;
@@ -76,7 +84,7 @@ namespace FolderDiag.Wpf
         {
             // "Single-click to open an item (point to select)": open on release over the same row,
             // unless a modifier key is held (Ctrl/Shift click only selects, as in Explorer)
-            if (!ExplorerSettings.SingleClickToOpen || sender is not DataGrid grid) return;
+            if (!ExplorerSettings.SingleClickToOpen || sender is not Selector grid) return;
             if (Keyboard.Modifiers != ModifierKeys.None) return;
             object? item = RowItemFrom(grid, e.OriginalSource as DependencyObject);
             if (item != null && ReferenceEquals(item, _pressedItem) && EntryOf(item) is Entry entry)
@@ -90,7 +98,7 @@ namespace FolderDiag.Wpf
         private void Grid_MouseMove(object sender, MouseEventArgs e)
         {
             // Point to select (single-click mode)
-            if (!ExplorerSettings.SingleClickToOpen || sender is not DataGrid grid || e.LeftButton == MouseButtonState.Pressed) return;
+            if (!ExplorerSettings.SingleClickToOpen || sender is not Selector grid || e.LeftButton == MouseButtonState.Pressed) return;
             var item = RowItemFrom(grid, e.OriginalSource as DependencyObject);
             if (item != null && !ReferenceEquals(grid.SelectedItem, item)) grid.SelectedItem = item;
         }
@@ -105,7 +113,7 @@ namespace FolderDiag.Wpf
         // ── Keyboard: Explorer shortcuts ──────────────────────────────
         private void Grid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (sender is not DataGrid grid) return;
+            if (sender is not Selector grid) return;
             var mods = Keyboard.Modifiers;
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
             Entry? sel = EntryOf(grid.SelectedItem);          // anything, including ".." (open)
@@ -135,7 +143,7 @@ namespace FolderDiag.Wpf
 
         private void Grid_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (sender is not DataGrid grid || string.IsNullOrEmpty(e.Text) || char.IsControl(e.Text[0])) return;
+            if (sender is not Selector grid || string.IsNullOrEmpty(e.Text) || char.IsControl(e.Text[0])) return;
             if ((DateTime.Now - _typeAheadAt).TotalMilliseconds > 1000) _typeAhead = "";
             _typeAheadAt = DateTime.Now;
             _typeAhead += e.Text;
@@ -145,8 +153,8 @@ namespace FolderDiag.Wpf
             if (match != null)
             {
                 grid.SelectedItem = match;
-                grid.ScrollIntoView(match);
-                (grid.ItemContainerGenerator.ContainerFromItem(match) as DataGridRow)?.Focus();
+                ScrollItemIntoView(grid, match);
+                (grid.ItemContainerGenerator.ContainerFromItem(match) as UIElement)?.Focus();
             }
             e.Handled = true;
         }
@@ -380,12 +388,12 @@ namespace FolderDiag.Wpf
 
         private void SelectPath(string path)
         {
-            if (ActiveGrid is not DataGrid grid) return;
+            if (ActiveGrid is not Selector grid) return;
             var item = grid.Items.Cast<object>().FirstOrDefault(i =>
                 EntryOf(i) is Entry en && string.Equals(en.Path, path, StringComparison.OrdinalIgnoreCase));
             if (item == null) return;
             grid.SelectedItem = item;
-            grid.ScrollIntoView(item);
+            ScrollItemIntoView(grid, item);
         }
 
         // ── Properties (the real Windows dialog) ──────────────────────
